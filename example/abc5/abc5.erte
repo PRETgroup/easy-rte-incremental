@@ -1,0 +1,82 @@
+function abc5;
+interface of abc5 {
+	in bool A;  //in here means that they're going from PLANT to CONTROLLER
+	out bool B; //out here means that they're going from CONTROLLER to PLANT
+	out bool C; //out here means that they're going from CONTROLLER to PLANT
+}
+
+policy AB5 of abc5 {
+	internals {
+		dtimer_t v1;
+	}
+
+	states {
+
+		//first state is initial, and represents "We're waiting for an A"
+		s0 {
+			//if we receive neither A nor B, do nothing														
+			-> s0 on (!A and !B): v1 := 0;
+
+			//if we receive an A only, head to state s1							
+			-> s1 on (A and !B): v1 := 0;
+			
+			//if we receive a B, or an A and a B (i.e. if we receive a B) then VIOLATION							
+			-> violation on ((!A and B) or (A and B)) recover B := 0;	
+		}
+
+		//s1 is "we're waiting for a B, and it needs to get here within 5 ticks"
+		s1 {
+			enforce B := 1 if v1 >= 5;
+			enforce A := 0 if A;
+			
+			//if we receive nothing, and we aren't over-time, then we do nothing														
+			-> s1 on (!A and !B and v1 < 5);	
+
+			//if we receive a B only, head to state s0					
+			-> s0 on (!A and B);
+
+			//if we go overtime, or we receive another A, then VIOLATION	(swap these out for manual solutions if desired)		
+			//-> violation on ((v1 >= 5) or (A and B) or (A and !B));
+			//-> violation on (v1 >= 5) recover B := 1;
+			//-> violation on (A and B) or (A and !B) recover A := 0;	
+		}
+	}
+}
+
+policy AC5 of abc5 {
+	internals {
+		dtimer_t v2;
+	}
+
+	states {
+
+		//first state is initial, and represents "We're waiting for an A"
+		s0 {
+			//if we receive neither A nor C, do nothing														
+			-> s0 on (!A and !C): v2 := 0;
+
+			//if we receive an A only, head to state s1							
+			-> s1 on (A and !C): v2 := 0;
+			
+			//if we receive a C, or an A and a C (i.e. if we receive a C) then VIOLATION							
+			-> violation on ((!A and C) or (A and C)) recover C := 0;	
+		}
+
+		//s1 is "we're waiting for a C, and it needs to get here within 5 ticks"
+		s1 {
+			enforce C := 1 if v2 >= 5;
+			enforce A := 0 if A;
+			
+			//if we receive nothing, and we aren't over-time, then we do nothing														
+			-> s1 on (!A and !C and v2 < 5);	
+
+			//if we receive a C only, head to state s0					
+			-> s0 on (!A and C);
+
+			//if we go overtime, or we receive another A, then VIOLATION	(swap these out for manual solutions if desired)		
+			//-> violation on ((v2 >= 5) or (A and C) or (A and !C));
+			//-> violation on (v2 >= 5) recover C := 1;
+			//-> violation on (A and C) or (A and !C) recover A := 0;	
+		}
+	}
+}

@@ -11,6 +11,9 @@ with SCCharts, this project presents a more generalised any-type enforcement sys
 
 _easy-rte_ was ported from [goFB](https://github.com/PRETgroup/goFB).
 
+### About this Fork
+Forked in mid 2022 by Alex for the purpose of extending the compiler's ability for composition and hardware enforcement. 
+
 ## What is Runtime Enforcement?
 
 Runtime Enforcement is a subset of Run-time Assurance (RA) which focuses on formal semantics for blocking, delaying, modifying, or re-ordering events. 
