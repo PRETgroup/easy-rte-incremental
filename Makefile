@@ -20,6 +20,8 @@ COMPILEARGS ?=
 
 default: easy-rte-c easy-rte-parser
 
+local: easy-rte-c-local easy-rte-parser-local
+
 #convert C build instruction to C target
 c_enf: $(PROJECT)
 
@@ -30,8 +32,14 @@ easy-rte-c: rtec/* rtedef/*
 	go get github.com/PRETgroup/goFB/goFB
 	go build -o easy-rte-c -i ./rtec/main
 
+easy-rte-c-local: rtec/* rtedef/*
+	go build -o easy-rte-c -i ./rtec/main
+
 easy-rte-parser: rteparser/* rtedef/*
 	go get github.com/PRETgroup/goFB/goFB
+	go build -o easy-rte-parser -i ./rteparser/main
+
+easy-rte-parser-local: rteparser/* rtedef/*
 	go build -o easy-rte-parser -i ./rteparser/main
 
 run_cbmc: default 
