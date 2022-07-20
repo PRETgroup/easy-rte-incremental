@@ -19,7 +19,7 @@ type Converter struct {
 }
 
 //New returns a new instance of a Converter based on the provided language
-func New(language string) (*Converter, error) {
+func New(language string, parallelComposition bool) (*Converter, error) {
 	switch strings.ToLower(language) {
 	case "c":
 		return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "c", templates: cTemplates}, nil
@@ -27,7 +27,11 @@ func New(language string) (*Converter, error) {
 		fmt.Println("WARNING: VHDL compilation support is currently not working due to problems with the VHDL type system. Try Verilog instead.")
 		return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "vhdl", templates: vhdlTemplates}, nil
 	case "verilog":
-		return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogTemplates}, nil
+		if parallelComposition {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogParallelCompositionTemplates}, nil
+		} else {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogTemplates}, nil
+		}
 	default:
 		return nil, errors.New("Language " + language + " is not supported")
 	}
@@ -60,7 +64,7 @@ type TemplateData struct {
 
 //ConvertAll converts iec61499 xml (stored as []FB) into vhdl []byte for each block (becomes []VHDLOutput struct)
 //Returns nil error on success
-func (c *Converter) ConvertAll() ([]OutputFile, error) {
+func (c *Converter) ConvertAll(parallelComposition bool) ([]OutputFile, error) {
 	finishedConversions := make([]OutputFile, 0, len(c.Funcs))
 
 	type templateInfo struct {
@@ -85,8 +89,15 @@ func (c *Converter) ConvertAll() ([]OutputFile, error) {
 		}
 	}
 	if c.Language == "verilog" {
-		templates = []templateInfo{
-			{"test_F_", "functionVerilog", "sv"},
+		if parallelComposition{
+			fmt.Println("Warning: Experimental Parallel Composition Requested")
+			templates = []templateInfo{
+				{"test_F_", "functionVerilog", "sv"},
+			}
+		} else {
+			templates = []templateInfo{
+				{"test_F_", "functionVerilog", "sv"},
+			}
 		}
 	}
 	for _, template := range templates {

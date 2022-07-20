@@ -16,6 +16,7 @@
 
 FILE ?= $(PROJECT)
 PARSEARGS ?=
+COMPILEARGS ?=
 
 default: easy-rte-c easy-rte-parser
 
@@ -57,7 +58,7 @@ $(PROJECT)_V: ./example/$(PROJECT)/$(FILE).sv
 
 #generate the Verilog sources from the xml files
 %.sv: %.xml
-	./easy-rte-c -i $^ -o example/$(PROJECT) -l=verilog
+	./easy-rte-c $(COMPILEARGS) -i $^ -o example/$(PROJECT) -l=verilog
 
 #Bonus: C compilation: convert $(PROJECT) into the C binary name
 c_build: example_$(PROJECT)
