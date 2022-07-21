@@ -91,52 +91,52 @@ const rteVerilogParallelCompositionTemplate = `{{define "_policyIn"}}{{$block :=
 
 //Warning: This is experimental parallel composition code.
 
-//To check this file using EBMC, run the following command:
-//$ ebmc F_{{$block.Name}}.sv
-
-//For each policy, we need define types for the state machines
-{{range $polI, $pol := $block.Policies}}
-{{if len $pol.States}}{{range $index, $state := $pol.States}}
-` + "`" + `define POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_{{$state}} {{$index}}{{end}}{{else}}POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_unknown 0{{end}}
-` + "`" + `define POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_violation {{if len $pol.States}}{{len $pol.States}}{{else}}1{{end}}
-{{end}}
-
 module F_combinatorialVerilog_{{$block.Name}} (
+	input wire clk,
+
 	//inputs (plant to controller){{range $index, $var := $block.InputVars}}
 	input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out,
+	output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out,
+	output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care,
 	{{end}}
 	//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
 	input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out,
+	output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out,
+	output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_dont_care,
 	{{end}}
 
-	{{range $polI, $pol := $block.Policies}}//internal vars for EBMC to overload
-	{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out,
-	{{end}}{{end}}{{end}}
-	
-	//state input var
-	{{range $polI, $pol := $block.Policies}}{{if $polI}},
-	{{end}}input wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_in,
-	output wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out
+	//helpful state output input var{{range $polI, $pol := $block.Policies}}{{if $polI}},
+	{{end}}
+	output reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out
 	{{end}}
 	
 );
 
-{{range $index, $var := $block.InputVars}}
-{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}};
-{{end}}{{range $index, $var := $block.OutputVars}}
-{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}};
-{{end}}{{range $polI, $pol := $block.Policies}}
-{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}}{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
-{{end}}{{end}}{{end}}
+	//For each policy, we need define types for the state machines{{range $polI, $pol := $block.Policies}}
+	localparam
+		{{if len $pol.States}}{{range $index, $state := $pol.States}}` + `POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_{{$state}} = {{$index}},
+		{{end}}{{else}}POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_unknown 0 {{end}}` + `POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_violation = {{if len $pol.States}}{{len $pol.States}};{{else}}1;{{end}}
+	{{end}}
 
-//For each policy, we need a reg for the state machine
-{{range $polI, $pol := $block.Policies}}reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state;
-reg transTaken_{{$block.Name}}_policy_{{$pol.Name}}; //EBMC liveness check register flag (will be optimised away in normal compiles)
-{{end}}
+	{{range $index, $var := $block.InputVars}}
+	{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}};
+	{{end}}{{range $index, $var := $block.OutputVars}}
+	{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}};
+	{{end}}{{range $polI, $pol := $block.Policies}}
+	{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
+	{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}}{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
+	{{end}}{{end}}{{end}}
+
+	//For each policy, we need a reg for the state machine{{range $polI, $pol := $block.Policies}}
+	reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_c_state = 0;
+	reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_n_state = 0;
+	{{end}}
+
+	always @(posedge clk)
+	begin
+		{{range $polI, $pol := $block.Policies}}
+		{{$block.Name}}_policy_{{$pol.Name}}_c_state = {{$block.Name}}_policy_{{$pol.Name}}_n_state;{{end}}
+	end
 
 always @* begin
 
