@@ -118,19 +118,28 @@ module F_combinatorialVerilog_{{$block.Name}} (
 		{{end}}{{else}}POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_unknown 0 {{end}}` + `POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_violation = {{if len $pol.States}}{{len $pol.States}};{{else}}1;{{end}}
 	{{end}}
 
+	//For each policy, we need a reg for the state machine{{range $polI, $pol := $block.Policies}}
+	reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_c_state = 0;
+	reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_n_state = 0;
+	{{end}}
+
 	{{range $index, $var := $block.InputVars}}
-	{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}};
+	{{getVerilogType $var.Type}}{{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{else}}= 0{{end}};
 	{{end}}{{range $index, $var := $block.OutputVars}}
-	{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}};
+	{{getVerilogType $var.Type}}{{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{else}}= 0{{end}};
 	{{end}}{{range $polI, $pol := $block.Policies}}
 	{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
 	{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}}{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
 	{{end}}{{end}}{{end}}
 
-	//For each policy, we need a reg for the state machine{{range $polI, $pol := $block.Policies}}
-	reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_c_state = 0;
-	reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_n_state = 0;
+	initial begin{{range $index, $var := $block.InputVars}}
+		{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out = 0;
+		{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care = 0;
+	{{end}}{{range $index, $var := $block.OutputVars}}
+		{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out = 0;
+		{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_dont_care = 0;
 	{{end}}
+	end
 
 	always @(posedge clk)
 	begin
@@ -138,12 +147,13 @@ module F_combinatorialVerilog_{{$block.Name}} (
 		{{$block.Name}}_policy_{{$pol.Name}}_c_state = {{$block.Name}}_policy_{{$pol.Name}}_n_state;{{end}}
 	end
 
-always @* begin
+always @({{range $index, $var := $block.InputVars}}{{$var.Name}}_ptc_in, {{end}}{{range $index, $var := $block.OutputVars}}{{$var.Name}}_ctp_in {{if $index =(len $block.OutputVars)}}{{else}},{{end}}{{end}}) begin
+	// Default no location change{{range $polI, $pol := $block.Policies}}
+	{{$block.Name}}_policy_{{$pol.Name}}_n_state = {{$block.Name}}_policy_{{$pol.Name}}_c_state;{{end}} 
 
 	{{range $index, $var := $block.InputVars}}
 	{{$var.Name}} = {{$var.Name}}_ptc_in;
 	{{end}}
-
 	{{range $index, $var := $block.OutputVars}}
 	{{$var.Name}} = {{$var.Name}}_ctp_in;
 	{{end}}
@@ -160,165 +170,20 @@ always @* begin
 	{{if $block.Policies}}{{template "_policyOut" $block}}{{end}}
 end
 
-{{range $index, $var := $block.InputVars}}
-assign {{$var.Name}}_ptc_out = {{$var.Name}};
-{{end}}
-
-{{range $index, $var := $block.OutputVars}}
-assign {{$var.Name}}_ctp_out = {{$var.Name}};
-{{end}}
-
-//emit state/time inputs
-{{range $polI, $pol := $block.Policies}}
-assign {{$block.Name}}_policy_{{$pol.Name}}_state_out =  {{$block.Name}}_policy_{{$pol.Name}}_state;
-{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}assign {{$var.Name}}_out = {{$var.Name}};{{end}}
-{{end}}{{end}}{{end}}
-
-//For each policy, ensure correctness (systemverilog only) and liveness
-{{range $polI, $pol := $block.Policies}}assert property ({{$block.Name}}_policy_{{$pol.Name}}_state_in >= ` + "`" + `POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_violation || {{$block.Name}}_policy_{{$pol.Name}}_state_out != ` + "`" + `POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_violation);
-//(temporarily disabled) assert property (transTaken_{{$block.Name}}_policy_{{$pol.Name}} == 1);
-{{end}}
-
-endmodule
-
-
-module F_{{$block.Name}} (
-	//inputs (plant to controller){{range $index, $var := $block.InputVars}}
-	input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out,
-	{{end}}
-	//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-	input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out,
-	{{end}}
-
-	//state var for EBMC to overload
-	{{range $polI, $pol := $block.Policies}}input wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_embc_in,
-	{{end}}
-	{{range $polI, $pol := $block.Policies}}//internal vars for EBMC to overload
-	{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_embc_in,
-	{{end}}{{end}}
-	{{end}}
-	
-
-	input wire CLOCK
-);
-
-//For each policy, we need a reg for the state machine
-{{range $polI, $pol := $block.Policies}}reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state = 0;
-wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_next;
-{{end}}
-
-/*{{range $index, $var := $block.InputVars}}
-{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}} = {{$var.InitialValue}}{{end}};
-{{end}}{{range $index, $var := $block.OutputVars}}
-{{getVerilogType $var.Type}} {{$var.Name}} {{if $var.InitialValue}} = {{$var.InitialValue}}{{end}};
-{{end}}*/
-
-{{range $polI, $pol := $block.Policies}}
-{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}{{getVerilogType $var.Type}} {{$var.Name}}{{if $var.InitialValue}} = {{$var.InitialValue}}{{end}};
-wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_next;
-{{end}}{{end}}{{end}}{{end}}
-
-F_combinatorialVerilog_{{$block.Name}} combPart (
-	//inputs (plant to controller){{range $index, $var := $block.InputVars}}
-	.{{$var.Name}}_ptc_in({{$var.Name}}_ptc_in),
-	.{{$var.Name}}_ptc_out({{$var.Name}}_ptc_out),
-	{{end}}
-	//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-	.{{$var.Name}}_ctp_in({{$var.Name}}_ctp_in),
-	.{{$var.Name}}_ctp_out({{$var.Name}}_ctp_out),
-	{{end}}
-
-	{{range $polI, $pol := $block.Policies}}//internal vars for EBMC to overload
-	{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}.{{$var.Name}}_in({{$var.Name}}),
-	.{{$var.Name}}_out({{$var.Name}}_next),
-	{{end}}{{end}}{{end}}
-	
-	//state input var
-	{{range $polI, $pol := $block.Policies}}{{if $polI}},
-	{{end}}.{{$block.Name}}_policy_{{$pol.Name}}_state_in({{$block.Name}}_policy_{{$pol.Name}}_state),
-	.{{$block.Name}}_policy_{{$pol.Name}}_state_out({{$block.Name}}_policy_{{$pol.Name}}_state_next)
-	{{end}}
-);
-
-	always@(posedge CLOCK) begin
-		//capture synchronous inputs
-	
-		{{range $polI, $pol := $block.Policies}}//internal vars
-		{{$block.Name}}_policy_{{$pol.Name}}_state = {{$block.Name}}_policy_{{$pol.Name}}_state_next;
-		{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}{{$var.Name}} = {{$var.Name}}_next;
-		{{end}}{{end}}{{end}}
-
-		
-	end
-	
-endmodule
-
-module test_F_{{$block.Name}} (
-	//inputs (plant to controller){{range $index, $var := $block.InputVars}}
-	input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out,
-	{{end}}
-	//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-	input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_in,
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out,
-	{{end}}
-
-	input wire CLOCK
-);
-
-{{range $index, $var := $block.InputVars}}
-reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_in_reg;
-wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out_wire;
-reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out_reg;
-{{end}}
-
-//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_in_reg;
-wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out_wire;
-reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out_reg;
-{{end}}
-
-F_{{$block.Name}} test (
-
-	//inputs (plant to controller){{range $index, $var := $block.InputVars}}
-	.{{$var.Name}}_ptc_in({{$var.Name}}_ptc_in_reg),
-	.{{$var.Name}}_ptc_out({{$var.Name}}_ptc_out_wire),
-	{{end}}
-	//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-	.{{$var.Name}}_ctp_in({{$var.Name}}_ctp_in_reg),
-	.{{$var.Name}}_ctp_out({{$var.Name}}_ctp_out_wire),
-	{{end}}
-
-	.CLOCK(CLOCK)
-);
-
-always@(posedge CLOCK) begin
-	//inputs (plant to controller)
 	{{range $index, $var := $block.InputVars}}
-	{{$var.Name}}_ptc_in_reg = {{$var.Name}}_ptc_in;
-	{{$var.Name}}_ptc_out_reg = {{$var.Name}}_ptc_out_wire;
+	assign {{$var.Name}}_ptc_out = {{$var.Name}};
 	{{end}}
 
-	//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-	{{$var.Name}}_ctp_in_reg = {{$var.Name}}_ctp_in;
-	{{$var.Name}}_ctp_out_reg = {{$var.Name}}_ctp_out_wire;
+	{{range $index, $var := $block.OutputVars}}
+	assign {{$var.Name}}_ctp_out = {{$var.Name}};
 	{{end}}
 
-end
-
-//inputs (plant to controller)
-{{range $index, $var := $block.InputVars}}
-assign {{$var.Name}}_ptc_out = {{$var.Name}}_ptc_out_reg;
-{{end}}
-
-//outputs (controller to plant)
-{{range $index, $var := $block.OutputVars}}
-assign {{$var.Name}}_ctp_out = {{$var.Name}}_ctp_out_reg;
-{{end}}
+	//emit state/time inputs
+	{{range $polI, $pol := $block.Policies}}
+	assign {{$block.Name}}_policy_{{$pol.Name}}_state_out =  {{$block.Name}}_policy_{{$pol.Name}}_state;
+	{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
+	{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}assign {{$var.Name}}_out = {{$var.Name}};{{end}}
+	{{end}}{{end}}{{end}}
 
 endmodule
 
