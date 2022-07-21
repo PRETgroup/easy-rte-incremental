@@ -144,7 +144,7 @@ const rteVerilogParallelCompositionTemplate = `{{define "_policyIn"}}{{$block :=
 			{{$block.Name}}_policy_{{$pol.Name}}_c_state = {{$block.Name}}_policy_{{$pol.Name}}_n_state;
 		end
 
-		always @({{range $index, $var := $block.InputVars}}{{$var.Name}}_ptc_in, {{end}}{{range $index, $var := $block.OutputVars}}{{$var.Name}}_ctp_in {{if $index =(len $block.OutputVars)}}{{else}},{{end}}{{end}}) begin
+		always @({{range $index, $var := $block.InputVars}}{{$var.Name}}_ptc_in, {{end}}{{range $index, $var := $block.OutputVars}}{{$var.Name}}_ctp_in {{if equal $index (subtract (len $block.OutputVars) 1)}}{{else}},{{end}}{{end}}) begin
 			// Default no location change
 			{{$block.Name}}_policy_{{$pol.Name}}_n_state = {{$block.Name}}_policy_{{$pol.Name}}_c_state;
 			
@@ -210,7 +210,9 @@ var verilogParallelCompositionTemplateFuncMap = template.FuncMap{
 
 	"compileExpression": stconverter.VerilogCompileExpression,
 
-	"add": add,
+	"add":      add,
+	"subtract": subtract,
+	"equal":    equal,
 }
 
 var verilogParallelCompositionTemplates = template.Must(template.New("").Funcs(verilogParallelCompositionTemplateFuncMap).Parse(rteVerilogParallelCompositionTemplate))
