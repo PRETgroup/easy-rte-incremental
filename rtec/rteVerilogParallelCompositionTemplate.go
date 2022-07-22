@@ -54,7 +54,7 @@ const rteVerilogParallelCompositionTemplate = `
 		{{getVerilogType $var.Type}}{{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{else}}= 0{{end}};
 		{{end}}
 		{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-		{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}}{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
+		{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}} = 0{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
 		{{end}}{{end}}
 
 		initial begin{{range $index, $var := $block.InputVars}}
@@ -69,6 +69,11 @@ const rteVerilogParallelCompositionTemplate = `
 		always @(posedge clk)
 		begin
 			{{$block.Name}}_policy_{{$pol.Name}}_c_state = {{$block.Name}}_policy_{{$pol.Name}}_n_state;
+
+			//increment timers/clocks
+			{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
+			{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}{{$var.Name}} = {{$var.Name}}{{if $var.IsDTimer}} + 1{{end}};{{end}}
+			{{end}}{{end}}
 		end
 
 		always @({{range $index, $var := $block.InputVars}}{{$var.Name}}_ptc_in, {{end}}{{range $index, $var := $block.OutputVars}}{{$var.Name}}_ctp_in {{if equal $index (subtract (len $block.OutputVars) 1)}}{{else}},{{end}}{{end}}) begin
@@ -80,11 +85,6 @@ const rteVerilogParallelCompositionTemplate = `
 			{{end}}
 			{{range $index, $var := $block.OutputVars}}{{$var.Name}} = {{$var.Name}}_ctp_in;
 			{{end}}
-
-			//capture time inputs
-			{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-			{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}{{$var.Name}} = {{$var.Name}}_in{{if $var.IsDTimer}} + 1{{end}};{{end}}
-			{{end}}{{end}}
 
 			{{if $block.Policies}}//input policies
 			{{$pfbEnf := index $pbfPolicies $polI}}
