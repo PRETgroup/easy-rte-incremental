@@ -106,11 +106,16 @@ const rteVerilogParallelCompositionTemplate = `{{define "_policyIn"}}{{$block :=
 		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care,
 		{{end}}
 
+		//helpful internal variable outputs {{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
+		output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out,
+		{{end}}{{end}}
+		
 		//helpful state output input var{{if $polI}},
 		{{end}}
 		output reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out
-		
+
 		);
+
 
 		//For each policy, we need define types for the state machines
 		localparam
