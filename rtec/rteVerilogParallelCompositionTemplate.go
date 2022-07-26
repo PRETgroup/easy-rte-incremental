@@ -192,7 +192,94 @@ const rteVerilogParallelCompositionTemplate = `
 	endmodule
 
 	{{end}}
+
+// Merge blocks for each input and output
+//merge inputs (plant to controller){{range $index, $var := $block.InputVars}}
+module merge_{{$var.Name}} (
+		input wire {{$var.Name}}_ptc_in, // original environment signal
+		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ptc_enf,
+		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf,
+		output reg {{$var.Name}}_enf_combined,
+		output reg {{$var.Name}}_none_care,
+		output reg {{$var.Name}}_ptc_out_final
+	);
+	initial begin
+		{{$var.Name}}_enf_combined = 0;
+		{{$var.Name}}_none_care = 0;
+		{{$var.Name}}_ptc_out_final = 0;
+	end
+
+	always@({{$var.Name}}_ptc_enf, {{$var.Name}}_dont_care_enf) begin
+		// OR all enforcer output
+		{{$var.Name}}_enf_combined <= |{{$var.Name}}_ptc_enf;
+		
+		// AND the don't cares (to figure out if none care)
+		{{$var.Name}}_none_care <= &{{$var.Name}}_dont_care_enf;
+
+	end
+
+	reg {{$var.Name}}_env_delay;
+	reg {{$var.Name}}_env_delay_2;
+	always @({{$var.Name}}_ptc_in) begin
+		{{$var.Name}}_env_delay <= {{$var.Name}}_ptc_in;
+	end
+	always @({{$var.Name}}_env_delay) begin
+		{{$var.Name}}_env_delay_2 <= {{$var.Name}}_env_delay;
+	end
+
+	// Mux to select original if none care
+	always @({{$var.Name}}_enf_combined, {{$var.Name}}_none_care, {{$var.Name}}_env_delay_2) begin
+		{{$var.Name}}_ptc_out_final <= ({{$var.Name}}_none_care)? {{$var.Name}}_env_delay_2: {{$var.Name}}_enf_combined;
+	end
+
+endmodule
 {{end}}
+
+//merge outputs (controller to plant){{range $index, $var := $block.OutputVars}}
+module merge_{{$var.Name}} (
+		input wire {{$var.Name}}_ctp_in, // original environment signal
+		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ctp_enf,
+		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf,
+		output reg {{$var.Name}}_enf_combined,
+		output reg {{$var.Name}}_none_care,
+		output reg {{$var.Name}}_ctp_out_final
+	);
+
+	initial begin
+		{{$var.Name}}_enf_combined = 0;
+		{{$var.Name}}_none_care = 0;
+		{{$var.Name}}_ctp_out_final = 0;
+	end
+
+	always@({{$var.Name}}_ctp_enf, {{$var.Name}}_dont_care_enf)	begin
+		// OR all enforcer output
+		{{$var.Name}}_enf_combined <= |{{$var.Name}}_ctp_enf;
+		
+		// AND the don't cares (to figure out if none care)
+		{{$var.Name}}_none_care <= &{{$var.Name}}_dont_care_enf;
+
+	end
+
+	reg {{$var.Name}}_env_delay;
+	reg {{$var.Name}}_env_delay_2;
+	always @({{$var.Name}}_ctp_in) begin
+		{{$var.Name}}_env_delay <= {{$var.Name}}_ctp_in;
+	end
+	always @({{$var.Name}}_env_delay) begin
+		{{$var.Name}}_env_delay_2 <= {{$var.Name}}_env_delay;
+	end
+
+	// Mux to select original if none care
+	always @({{$var.Name}}_enf_combined, {{$var.Name}}_none_care, {{$var.Name}}_env_delay_2) begin
+		{{$var.Name}}_ctp_out_final <= ({{$var.Name}}_none_care)? {{$var.Name}}_env_delay_2: {{$var.Name}}_enf_combined;
+	end
+
+endmodule
+{{end}}
+
+{{end}}
+
+
 `
 
 var verilogParallelCompositionTemplateFuncMap = template.FuncMap{
