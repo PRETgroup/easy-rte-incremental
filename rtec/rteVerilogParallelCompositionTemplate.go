@@ -55,6 +55,7 @@ const rteVerilogParallelCompositionTemplate = `
 		{{end}}
 		{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
 		{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}} = 0{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
+		{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}reg reset_{{$var.Name}};{{end}}{{end}}
 		{{end}}{{end}}
 
 		initial begin{{range $index, $var := $block.InputVars}}
@@ -72,8 +73,11 @@ const rteVerilogParallelCompositionTemplate = `
 
 			//increment timers/clocks
 			{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-			{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}{{$var.Name}} = {{$var.Name}}{{if $var.IsDTimer}} + 1{{end}};{{end}}
-			{{end}}{{end}}
+			{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}if (reset_{{$var.Name}} === 1) begin
+				{{$var.Name}} = 0;
+			end else begin
+				{{$var.Name}} = {{$var.Name}}{{if $var.IsDTimer}} + 1;
+			end{{end}}{{end}}{{end}}{{end}}
 		end
 
 		always @* begin
@@ -83,8 +87,10 @@ const rteVerilogParallelCompositionTemplate = `
 			// Default no change to inputs/outputs (transparency) {{range $index, $var := $block.InputVars}}
 			{{$var.Name}} = {{$var.Name}}_ptc_in;
 			{{end}}
-			{{range $index, $var := $block.OutputVars}}{{$var.Name}} = {{$var.Name}}_ctp_in;
-			{{end}}
+			{{range $index, $var := $block.OutputVars}}{{$var.Name}} = {{$var.Name}}_ctp_in;{{end}}
+
+			{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}// Default no clock reset
+			{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}reset_{{$var.Name}} = 0;{{end}}{{end}}{{end}}
 
 			{{if $block.Policies}}//input policies
 			{{$pfbEnf := index $pbfPolicies $polI}}
@@ -138,8 +144,8 @@ const rteVerilogParallelCompositionTemplate = `
 							//transition {{$tr.Source}} -> {{$tr.Destination}} on {{$tr.Condition}}
 							{{$block.Name}}_policy_{{$pol.Name}}_n_state = ` + `POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_{{$tr.Destination}};
 							//set expressions
-							{{range $exi, $ex := $tr.Expressions}}
-							{{$ex.VarName}} = {{$ex.Value}};{{end}}
+							{{range $exi, $ex := $tr.Expressions}}{{if not (equal_str ($ex.Value) "0")}}
+							{{$ex.VarName}} = {{$ex.Value}};{{else}}reset_{{$ex.VarName}} = 1;{{end}}{{end}}
 							//transTaken_{{$block.Name}}_policy_{{$pol.Name}} = 1;
 						end {{end}} else begin
 							//only possible in a violation
@@ -277,7 +283,7 @@ module merge_{{$var.Name}} (
 endmodule
 {{end}}
 
-module {{$block.Name}}_top_level(
+module test_F_{{$block.Name}}(
 
 		//inputs (plant to controller){{range $index, $var := $block.InputVars}}
 		{{$var.Name}}_ptc,
@@ -371,9 +377,10 @@ var verilogParallelCompositionTemplateFuncMap = template.FuncMap{
 
 	"compileExpression": stconverter.VerilogCompileExpression,
 
-	"add":      add,
-	"subtract": subtract,
-	"equal":    equal,
+	"add":       add,
+	"subtract":  subtract,
+	"equal":     equal,
+	"equal_str": equal_str,
 }
 
 var verilogParallelCompositionTemplates = template.Must(template.New("").Funcs(verilogParallelCompositionTemplateFuncMap).Parse(rteVerilogParallelCompositionTemplate))
