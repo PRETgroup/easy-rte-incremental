@@ -277,6 +277,75 @@ module merge_{{$var.Name}} (
 endmodule
 {{end}}
 
+module {{$block.Name}}_top_level(
+
+		//inputs (plant to controller){{range $index, $var := $block.InputVars}}
+		{{$var.Name}}_ptc,
+		OUTPUT_{{$var.Name}}_ptc_enf_final,{{end}}
+		//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
+		{{$var.Name}}_ctp,
+		OUTPUT_{{$var.Name}}_ctp_enf_final,{{end}}
+
+		clk
+	);
+
+	input wire clk;
+	{{range $index, $var := $block.InputVars}}
+	input wire {{$var.Name}}_ptc;
+	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ptc_enf;
+	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf;
+	wire OUTPUT_{{$var.Name}}_enf_combined;
+	wire OUTPUT_{{$var.Name}}_none_care;
+	output wire OUTPUT_{{$var.Name}}_ptc_enf_final;{{end}}
+
+	{{range $index, $var := $block.OutputVars}}
+	input wire {{$var.Name}}_ctp;
+	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ctp_enf;
+	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf;
+	wire OUTPUT_{{$var.Name}}_enf_combined;
+	wire OUTPUT_{{$var.Name}}_none_care;
+	output wire OUTPUT_{{$var.Name}}_ctp_enf_final;
+	{{end}}
+	
+	{{range $index, $var := $block.InputVars}}merge_{{$var.Name}} instance_merge_{{$var.Name}}(
+		.{{$var.Name}}_ptc_in({{$var.Name}}_ptc),
+		.{{$var.Name}}_ptc_enf({{$var.Name}}_ptc_enf),
+		.{{$var.Name}}_dont_care_enf({{$var.Name}}_dont_care_enf),
+		.{{$var.Name}}_enf_combined(OUTPUT_{{$var.Name}}_enf_combined),
+		.{{$var.Name}}_none_care(OUTPUT_{{$var.Name}}_none_care),
+		.{{$var.Name}}_ptc_out_final(OUTPUT_{{$var.Name}}_ptc_enf_final)
+	);
+	{{end}}
+	{{range $index, $var := $block.OutputVars}}merge_{{$var.Name}} instance_merge_{{$var.Name}}(
+		.{{$var.Name}}_ctp_in({{$var.Name}}_ctp),
+		.{{$var.Name}}_ctp_enf({{$var.Name}}_ctp_enf),
+		.{{$var.Name}}_dont_care_enf({{$var.Name}}_dont_care_enf),
+		.{{$var.Name}}_enf_combined(OUTPUT_{{$var.Name}}_enf_combined),
+		.{{$var.Name}}_none_care(OUTPUT_{{$var.Name}}_none_care),
+		.{{$var.Name}}_ctp_out_final(OUTPUT_{{$var.Name}}_ctp_enf_final)
+	);
+	{{end}}
+
+	{{range $polI, $pol := $block.Policies}}
+	F_combinatorialVerilog_{{$block.Name}}_policy_{{$pol.Name}} instance_policy_{{$pol.Name}}(
+		.clk(clk),
+		{{range $index, $var := $block.InputVars}}
+		.{{$var.Name}}_ptc_in({{$var.Name}}_ptc),
+		.{{$var.Name}}_ptc_out({{$var.Name}}_ptc_enf[{{$polI}}]),
+		.{{$var.Name}}_dont_care({{$var.Name}}_dont_care_enf[{{$polI}}]),
+		{{end}}{{range $index, $var := $block.OutputVars}}
+		.{{$var.Name}}_ctp_in({{$var.Name}}_ctp),
+		.{{$var.Name}}_ctp_out({{$var.Name}}_ctp_enf[{{$polI}}]),
+		.{{$var.Name}}_dont_care({{$var.Name}}_dont_care_enf[{{$polI}}]),
+		{{end}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
+		.{{$var.Name}}_out(),
+		{{end}}{{end}}
+		{{if $polI}}{{end}}.{{$block.Name}}_policy_{{$pol.Name}}_state_out()
+		);
+	{{end}}
+	
+endmodule
+
 {{end}}
 
 
