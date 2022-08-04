@@ -301,4 +301,12 @@ Running this example will show that the robot eventually drives its way to the d
 
 ## Combining policies (Experimental)
 
+Known limitations: Verilog only
+
+### Monolithic Composition
 `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product`
+
+### Parallel Composition
+`make verilog_enf PROJECT=abc5 COMPILEARGS=-parallelComposition`
+
+Produces verilog which can be simulated (tested in ModelSim) and synthesised (tested in Quartus).
