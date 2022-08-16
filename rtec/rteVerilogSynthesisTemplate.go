@@ -51,10 +51,11 @@ const rteVerilogSynthesisTemplate = `
 		{{end}}{{range $index, $var := $block.OutputVars}}
 		{{getVerilogType $var.Type}}{{$var.Name}} {{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{else}}= 0{{end}};
 		{{end}}
-		{{$pfbEnf := index $pbfPolicies $polI}}{{if not $pfbEnf}}//Policy is broken!{{else}}//internal vars
-		{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}}{{else}}{{getVerilogType $var.Type}} {{$var.Name}} = 0{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
-		{{range $vari, $var := $pfbEnf.OutputPolicy.InternalVars}}{{if not $var.Constant}}reg reset_{{$var.Name}};{{end}}{{end}}
-		{{end}}{{end}}
+		
+		//internal vars
+		{{range $vari, $var := $pol.InternalVars}}{{if $var.Constant}}wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}} = {{$var.InitialValue}} {{else}}{{getVerilogType $var.Type}} {{$var.Name}} = 0{{if $var.InitialValue}}/* = {{$var.InitialValue}}*/{{end}}{{end}};
+		{{if not $var.Constant}}reg reset_{{$var.Name}};{{end}}
+		{{end}}
 
 		initial begin{{range $index, $var := $block.InputVars}}
 			{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out = 0;
@@ -73,7 +74,7 @@ const rteVerilogSynthesisTemplate = `
 				{{$var.Name}} = 0;
 			end else begin
 				{{$var.Name}} = {{$var.Name}}{{if $var.IsDTimer}} + 1;
-			end{{end}}{{end}}{{end}}{{end}}
+			end {{end}}{{end}}{{end}}{{end}}
 		end
 
 		always @* begin
