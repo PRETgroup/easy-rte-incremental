@@ -20,12 +20,10 @@ const rteVerilogSynthesisTemplate = `
 		//inputs (plant to controller){{range $index, $var := $block.InputVars}}
 		input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_in,
 		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out,
-		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care,
 		{{end}}
 		//outputs (controller to plant){{range $index, $var := $block.OutputVars}}
 		input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_in,
 		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out,
-		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care,
 		{{end}}
 
 		//helpful internal variable outputs {{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
@@ -60,10 +58,8 @@ const rteVerilogSynthesisTemplate = `
 
 		initial begin{{range $index, $var := $block.InputVars}}
 			{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out = 0;
-			{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care = 0;
 		{{end}}{{range $index, $var := $block.OutputVars}}
 			{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out = 0;
-			{{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care = 0;
 		{{end}}
 		end
 
@@ -164,23 +160,6 @@ const rteVerilogSynthesisTemplate = `
 			{{end}}
 			//OUTPUT POLICY {{$pol.Name}} END
 
-			// Ground all signals the enf doesnt care about
-			// Inputs{{range $index, $var := $block.InputVars}}
-			if ({{$var.Name}} === {{$var.Name}}_ptc_in) begin
-				{{$var.Name}}_dont_care <= 1;
-				{{$var.Name}} = 0;
-			end else begin
-				{{$var.Name}}_dont_care <= 0;
-			end
-			{{end}}
-			// Outputs{{range $index, $var := $block.OutputVars}}
-			if ({{$var.Name}} === {{$var.Name}}_ctp_in) begin
-				{{$var.Name}}_dont_care <= 1;
-				{{$var.Name}} = 0;
-			end else begin
-				{{$var.Name}}_dont_care <= 0;
-			end
-			{{end}}
 			// Post input enforced 
 			{{range $index, $var := $block.InputVars}}{{$var.Name}}_ptc_out = {{$var.Name}};
 			{{end}}
@@ -199,89 +178,6 @@ const rteVerilogSynthesisTemplate = `
 
 	{{end}}
 
-// Merge blocks for each input and output
-//merge inputs (plant to controller){{range $index, $var := $block.InputVars}}
-module merge_{{$var.Name}} (
-		input wire {{$var.Name}}_ptc_in, // original environment signal
-		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ptc_enf,
-		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf,
-		output reg {{$var.Name}}_enf_combined,
-		output reg {{$var.Name}}_none_care,
-		output reg {{$var.Name}}_ptc_out_final
-	);
-	initial begin
-		{{$var.Name}}_enf_combined = 0;
-		{{$var.Name}}_none_care = 0;
-		{{$var.Name}}_ptc_out_final = 0;
-	end
-
-	always@({{$var.Name}}_ptc_enf, {{$var.Name}}_dont_care_enf) begin
-		// OR all enforcer output
-		{{$var.Name}}_enf_combined <= |{{$var.Name}}_ptc_enf;
-		
-		// AND the don't cares (to figure out if none care)
-		{{$var.Name}}_none_care <= &{{$var.Name}}_dont_care_enf;
-
-	end
-
-	reg {{$var.Name}}_env_delay;
-	reg {{$var.Name}}_env_delay_2;
-	always @({{$var.Name}}_ptc_in) begin
-		{{$var.Name}}_env_delay <= {{$var.Name}}_ptc_in;
-	end
-	always @({{$var.Name}}_env_delay) begin
-		{{$var.Name}}_env_delay_2 <= {{$var.Name}}_env_delay;
-	end
-
-	// Mux to select original if none care
-	always @({{$var.Name}}_enf_combined, {{$var.Name}}_none_care, {{$var.Name}}_env_delay_2) begin
-		{{$var.Name}}_ptc_out_final <= ({{$var.Name}}_none_care)? {{$var.Name}}_env_delay_2: {{$var.Name}}_enf_combined;
-	end
-
-endmodule
-{{end}}
-
-//merge outputs (controller to plant){{range $index, $var := $block.OutputVars}}
-module merge_{{$var.Name}} (
-		input wire {{$var.Name}}_ctp_in, // original environment signal
-		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ctp_enf,
-		input wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf,
-		output reg {{$var.Name}}_enf_combined,
-		output reg {{$var.Name}}_none_care,
-		output reg {{$var.Name}}_ctp_out_final
-	);
-
-	initial begin
-		{{$var.Name}}_enf_combined = 0;
-		{{$var.Name}}_none_care = 0;
-		{{$var.Name}}_ctp_out_final = 0;
-	end
-
-	always@({{$var.Name}}_ctp_enf, {{$var.Name}}_dont_care_enf)	begin
-		// OR all enforcer output
-		{{$var.Name}}_enf_combined <= |{{$var.Name}}_ctp_enf;
-		
-		// AND the don't cares (to figure out if none care)
-		{{$var.Name}}_none_care <= &{{$var.Name}}_dont_care_enf;
-
-	end
-
-	reg {{$var.Name}}_env_delay;
-	reg {{$var.Name}}_env_delay_2;
-	always @({{$var.Name}}_ctp_in) begin
-		{{$var.Name}}_env_delay <= {{$var.Name}}_ctp_in;
-	end
-	always @({{$var.Name}}_env_delay) begin
-		{{$var.Name}}_env_delay_2 <= {{$var.Name}}_env_delay;
-	end
-
-	// Mux to select original if none care
-	always @({{$var.Name}}_enf_combined, {{$var.Name}}_none_care, {{$var.Name}}_env_delay_2) begin
-		{{$var.Name}}_ctp_out_final <= ({{$var.Name}}_none_care)? {{$var.Name}}_env_delay_2: {{$var.Name}}_enf_combined;
-	end
-
-endmodule
-{{end}}
 
 module test_F_{{$block.Name}}(
 
@@ -293,7 +189,8 @@ module test_F_{{$block.Name}}(
 		{{$var.Name}}_ctp,
 		OUTPUT_{{$var.Name}}_ctp_enf_final,{{end}}
 		
-		//helper outputs{{range $polI, $pol := $block.Policies}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
+		//helper outputs
+		{{range $polI, $pol := $block.Policies}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
 		{{$var.Name}}_out,
 		{{end}}{{end}}{{if $polI}}{{end}}{{$block.Name}}_policy_{{$pol.Name}}_state_out,{{end}}
 
@@ -303,55 +200,27 @@ module test_F_{{$block.Name}}(
 	input wire clk;
 	{{range $index, $var := $block.InputVars}}
 	input wire {{$var.Name}}_ptc;
-	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ptc_enf;
-	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf;
-	wire OUTPUT_{{$var.Name}}_enf_combined;
-	wire OUTPUT_{{$var.Name}}_none_care;
 	output wire OUTPUT_{{$var.Name}}_ptc_enf_final;{{end}}
 
 	{{range $index, $var := $block.OutputVars}}
 	input wire {{$var.Name}}_ctp;
-	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_ctp_enf;
-	wire [{{(subtract (len $block.Policies) 1)}}:0] {{$var.Name}}_dont_care_enf;
-	wire OUTPUT_{{$var.Name}}_enf_combined;
-	wire OUTPUT_{{$var.Name}}_none_care;
 	output wire OUTPUT_{{$var.Name}}_ctp_enf_final;
 	{{end}}
 
-	//helper outputs{{range $polI, $pol := $block.Policies}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
+	//helper outputs
+	{{range $polI, $pol := $block.Policies}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
 	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out;
 	{{end}}{{end}}{{if $polI}}{{end}}output wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out;{{end}}
 	
-	{{range $index, $var := $block.InputVars}}merge_{{$var.Name}} instance_merge_{{$var.Name}}(
-		.{{$var.Name}}_ptc_in({{$var.Name}}_ptc),
-		.{{$var.Name}}_ptc_enf({{$var.Name}}_ptc_enf),
-		.{{$var.Name}}_dont_care_enf({{$var.Name}}_dont_care_enf),
-		.{{$var.Name}}_enf_combined(OUTPUT_{{$var.Name}}_enf_combined),
-		.{{$var.Name}}_none_care(OUTPUT_{{$var.Name}}_none_care),
-		.{{$var.Name}}_ptc_out_final(OUTPUT_{{$var.Name}}_ptc_enf_final)
-	);
-	{{end}}
-	{{range $index, $var := $block.OutputVars}}merge_{{$var.Name}} instance_merge_{{$var.Name}}(
-		.{{$var.Name}}_ctp_in({{$var.Name}}_ctp),
-		.{{$var.Name}}_ctp_enf({{$var.Name}}_ctp_enf),
-		.{{$var.Name}}_dont_care_enf({{$var.Name}}_dont_care_enf),
-		.{{$var.Name}}_enf_combined(OUTPUT_{{$var.Name}}_enf_combined),
-		.{{$var.Name}}_none_care(OUTPUT_{{$var.Name}}_none_care),
-		.{{$var.Name}}_ctp_out_final(OUTPUT_{{$var.Name}}_ctp_enf_final)
-	);
-	{{end}}
-
 	{{range $polI, $pol := $block.Policies}}
 	F_combinatorialVerilog_{{$block.Name}}_policy_{{$pol.Name}} instance_policy_{{$pol.Name}}(
 		.clk(clk),
 		{{range $index, $var := $block.InputVars}}
 		.{{$var.Name}}_ptc_in({{$var.Name}}_ptc),
-		.{{$var.Name}}_ptc_out({{$var.Name}}_ptc_enf[{{$polI}}]),
-		.{{$var.Name}}_dont_care({{$var.Name}}_dont_care_enf[{{$polI}}]),
+		.{{$var.Name}}_ptc_out(OUTPUT_{{$var.Name}}_ptc_enf_final),
 		{{end}}{{range $index, $var := $block.OutputVars}}
 		.{{$var.Name}}_ctp_in({{$var.Name}}_ctp),
-		.{{$var.Name}}_ctp_out({{$var.Name}}_ctp_enf[{{$polI}}]),
-		.{{$var.Name}}_dont_care({{$var.Name}}_dont_care_enf[{{$polI}}]),
+		.{{$var.Name}}_ctp_out(OUTPUT_{{$var.Name}}_ctp_enf_final),
 		{{end}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
 		.{{$var.Name}}_out({{$var.Name}}_out),
 		{{end}}{{end}}

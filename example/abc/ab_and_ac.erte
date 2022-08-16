@@ -43,6 +43,8 @@ policy ac of ab_and_ac {
 		}
 
 		c1 {
+			// dont use enforce signals when composing monolithically 
+			// (adds some form of priority which causes incorrect composition)
 			//enforce C := 1;
 			//enforce A2 := 0 if A2;
 			
