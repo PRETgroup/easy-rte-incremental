@@ -91,15 +91,15 @@ func (c *Converter) ConvertAll(parallelComposition bool, synthesis bool) ([]Outp
 		}
 	}
 	if c.Language == "verilog" {
-		if parallelComposition{
-			fmt.Println("Warning: Experimental Parallel Composition Requested")
+		if parallelComposition {
+			fmt.Println("Note: Experimentally compiled as parallel composition for hardware synthesis")
 			templates = []templateInfo{
-				{"test_F_", "functionVerilog", "sv"},
+				{"parallel_F_", "functionVerilog", "sv"},
 			}
 		} else if synthesis {
-			fmt.Println("Note: Compiled for hardware synthesis")
+			fmt.Println("Note: Experimentally compiled for hardware synthesis")
 			templates = []templateInfo{
-				{"test_F_", "functionVerilog", "sv"},
+				{"synthesis_F_", "functionVerilog", "sv"},
 			}
 		} else {
 			templates = []templateInfo{
