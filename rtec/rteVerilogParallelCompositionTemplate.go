@@ -283,7 +283,7 @@ module merge_{{$var.Name}} (
 endmodule
 {{end}}
 
-module test_F_{{$block.Name}}(
+module parallel_F_{{$block.Name}}(
 
 		//inputs (plant to controller){{range $index, $var := $block.InputVars}}
 		{{$var.Name}}_ptc,

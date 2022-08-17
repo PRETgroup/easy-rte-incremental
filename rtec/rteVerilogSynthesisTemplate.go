@@ -180,7 +180,7 @@ const rteVerilogSynthesisTemplate = `
 	{{end}}
 
 
-module test_F_{{$block.Name}}(
+module synthesis_F_{{$block.Name}}(
 
 		//inputs (plant to controller){{range $index, $var := $block.InputVars}}
 		{{$var.Name}}_ptc,
