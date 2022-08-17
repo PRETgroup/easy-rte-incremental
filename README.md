@@ -12,7 +12,7 @@ with SCCharts, this project presents a more generalised any-type enforcement sys
 _easy-rte_ was ported from [goFB](https://github.com/PRETgroup/goFB).
 
 ### About this Fork
-Forked in mid 2022 by Alex for the purpose of extending the compiler's ability for composition and hardware enforcement. 
+Forked in mid 2022 by Alex for the purpose of extending the compiler's ability for composition and hardware enforcement. This is discussed in more detail at the bottom of this read me. 
 
 ## What is Runtime Enforcement?
 
@@ -299,7 +299,7 @@ We can see then that the autogeneration of solutions is correct here, as it has 
 
 Running this example will show that the robot eventually drives its way to the desired location eventually, despite the controller presenting unsafe outputs (drive values too large) and the desired location being set off the table.
 
-## Combining policies (Experimental)
+## Composing Policies
 
 Known limitations: Verilog only
 
@@ -314,7 +314,8 @@ For example: these two snipets are not guaranteed to result in the same behaviou
 ```
 
 ```
--> violation on (v1 >= 5) and (!B)
+-> s1 on B;
+-> violation on (v1 >= 5) and (!B);
 ```
 
 _The reason for the lack of a guarantee: If there are other policies that are composed with the above examples, the order in which transition conditions are tested becomes important, and this order is not controllable._
@@ -324,10 +325,10 @@ _While it may be tempting to write conditions as if they are assessed sequential
 _Perhaps at some point we can alter the compiler to test all non-violating transitions before violation ones, as this may save time in the erte file creation, but note this isn't truly in the spirit of a TA/DTA._
 
 ### Monolithic Composition
-* For CMBC use `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product`
-
 * For hardware synthesis use
 `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product COMPILEARGS=-synthesis`
+
+* For EBMC use `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product`
 
 ### Parallel Composition
 * For hardware synthesis use `make verilog_enf PROJECT=abc5 COMPILEARGS=-parallelComposition`
