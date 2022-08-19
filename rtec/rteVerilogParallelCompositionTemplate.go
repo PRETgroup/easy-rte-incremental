@@ -15,8 +15,7 @@ const rteVerilogParallelCompositionTemplate = `
 
 {{range $polI, $pol := $block.Policies}}
 	module F_combinatorialVerilog_{{$block.Name}}_policy_{{$pol.Name}} (
-		input wire clk,
-
+		
 		//inputs (plant to controller){{range $index, $var := $block.InputVars}}
 		input wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_in,
 		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ptc_out,
@@ -27,15 +26,16 @@ const rteVerilogParallelCompositionTemplate = `
 		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_ctp_out,
 		output reg {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_dont_care,
 		{{end}}
-
+		
 		//helpful internal variable outputs {{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
-		output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out,
+		//output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out,
 		{{end}}{{end}}
 		
 		//helpful state output input var{{if $polI}},
 		{{end}}
-		output reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out
-
+		//output reg {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out,
+		
+		input wire clk
 		);
 
 
@@ -294,8 +294,8 @@ module parallel_F_{{$block.Name}}(
 		OUTPUT_{{$var.Name}}_ctp_enf_final,{{end}}
 		
 		//helper outputs{{range $polI, $pol := $block.Policies}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
-		{{$var.Name}}_out,
-		{{end}}{{end}}{{if $polI}}{{end}}{{$block.Name}}_policy_{{$pol.Name}}_state_out,{{end}}
+		//{{$var.Name}}_out,
+		{{end}}{{end}}{{if $polI}}{{end}}//{{$block.Name}}_policy_{{$pol.Name}}_state_out,{{end}}
 
 		clk
 	);
@@ -319,8 +319,8 @@ module parallel_F_{{$block.Name}}(
 	{{end}}
 
 	//helper outputs{{range $polI, $pol := $block.Policies}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
-	output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out;
-	{{end}}{{end}}{{if $polI}}{{end}}output wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out;{{end}}
+	//output wire {{getVerilogWidthArrayForType $var.Type}} {{$var.Name}}_out;
+	{{end}}{{end}}{{if $polI}}{{end}}//output wire {{getVerilogWidthArray (add (len $pol.States) 1)}} {{$block.Name}}_policy_{{$pol.Name}}_state_out;{{end}}
 	
 	{{range $index, $var := $block.InputVars}}merge_{{$var.Name}} instance_merge_{{$var.Name}}(
 		.{{$var.Name}}_ptc_in({{$var.Name}}_ptc),
@@ -343,7 +343,6 @@ module parallel_F_{{$block.Name}}(
 
 	{{range $polI, $pol := $block.Policies}}
 	F_combinatorialVerilog_{{$block.Name}}_policy_{{$pol.Name}} instance_policy_{{$pol.Name}}(
-		.clk(clk),
 		{{range $index, $var := $block.InputVars}}
 		.{{$var.Name}}_ptc_in({{$var.Name}}_ptc),
 		.{{$var.Name}}_ptc_out({{$var.Name}}_ptc_enf[{{$polI}}]),
@@ -353,9 +352,10 @@ module parallel_F_{{$block.Name}}(
 		.{{$var.Name}}_ctp_out({{$var.Name}}_ctp_enf[{{$polI}}]),
 		.{{$var.Name}}_dont_care({{$var.Name}}_dont_care_enf[{{$polI}}]),
 		{{end}}{{range $vari, $var := $pol.InternalVars}}{{if not $var.Constant}}
-		.{{$var.Name}}_out({{$var.Name}}_out),
+		//.{{$var.Name}}_out({{$var.Name}}_out),
 		{{end}}{{end}}
-		{{if $polI}}{{end}}.{{$block.Name}}_policy_{{$pol.Name}}_state_out({{$block.Name}}_policy_{{$pol.Name}}_state_out)
+		{{if $polI}}{{end}}//.{{$block.Name}}_policy_{{$pol.Name}}_state_out({{$block.Name}}_policy_{{$pol.Name}}_state_out),
+		.clk(clk)
 		);
 	{{end}}
 	
