@@ -1,0 +1,135 @@
+function water4;
+interface of water4 {
+    //in here means that they're going from PLANT to CONTROLLER
+	in bool ID1;  // Sensor identification passed
+	in bool OK1;  // Sensor reporting okay status
+    //out here means that they're going from CONTROLLER to PLANT
+	out bool PUMP1; // Controller actuating pump
+
+	in bool ID2;  // Sensor identification passed
+	in bool OK2;  // Sensor reporting okay status
+    //out here means that they're going from CONTROLLER to PLANT
+	out bool PUMP2; // Controller actuating pump
+
+	in bool ID3;  // Sensor identification passed
+	in bool OK3;  // Sensor reporting okay status
+    //out here means that they're going from CONTROLLER to PLANT
+	out bool PUMP3; // Controller actuating pump
+
+	in bool ID4;  // Sensor identification passed
+	in bool OK4;  // Sensor reporting okay status
+    //out here means that they're going from CONTROLLER to PLANT
+	out bool PUMP4; // Controller actuating pump
+}
+
+
+policy s1 of water4 {
+	states {
+
+		//first state is initial, and represents "We're waiting for an ID1 event from the sensor"
+		l0 {
+			enforce OK1 := 0, ID1 := 0 if (OK1 and ID1); // this needs to go first for priority
+			enforce OK1 := 0 if OK1;
+			enforce PUMP1 := 0 if PUMP1;
+
+			-> l0 on (!ID1 and !OK1 and !PUMP1);
+
+			-> l1 on (ID1 and !OK1 and !PUMP1);
+			
+			//-> violation on (PUMP1) recover PUMP1 := 0;	
+			//-> violation on (ID1 and OK1) recover ID1 := 0, OK1:= 0;	
+		}
+
+		//l1 is "we are waiting for a sensor update to determine if we could pump or not"
+		l1 {
+			enforce ID1 := 0, OK1 := 0 if ID1; // If the sensor IDs again it is considered malicious  
+            enforce PUMP1 := 0 if !OK1; // Don't pump if the sensor says dont!
+			//enforce PUMP1 := 1 if OK1; // Must pump if sensor says ok - REMOVED As controller using "sensor fusion" and redundancy in sensors
+
+			-> l0 on ((!ID1 and OK1 and PUMP1) or (!ID1 and !OK1 and !PUMP1) or (!ID1 and OK1 and !PUMP1)); // straight back to 10
+		}
+	}
+}
+
+policy s2 of water4 {
+	states {
+
+		//first state is initial, and represents "We're waiting for an ID2 event from the sensor"
+		l0 {
+			enforce OK2 := 0, ID2 := 0 if (OK2 and ID2); // this needs to go first for priority
+			enforce OK2 := 0 if OK2;
+			enforce PUMP2 := 0 if PUMP2;
+
+			-> l0 on (!ID2 and !OK2 and !PUMP2);
+
+			-> l1 on (ID2 and !OK2 and !PUMP2);
+			
+			//-> violation on (PUMP2) recover PUMP2 := 0;	
+			//-> violation on (ID2 and OK2) recover ID2 := 0, OK2:= 0;	
+		}
+
+		//l1 is "we are waiting for a sensor update to determine if we could pump or not"
+		l1 {
+			enforce ID2 := 0, OK2 := 0 if ID2; // If the sensor ID2s again it is considered malicious  
+            enforce PUMP2 := 0 if !OK2; // Don't pump if the sensor says dont!
+			//enforce PUMP2 := 1 if OK2; // Must pump if sensor says ok - REMOVED As controller using "sensor fusion" and redundancy in sensors
+
+			-> l0 on ((!ID2 and OK2 and PUMP2) or (!ID2 and !OK2 and !PUMP2) or (!ID2 and OK2 and !PUMP2)); // straight back to 10
+		}
+	}
+}
+policy s3 of water4 {
+	states {
+
+		//first state is initial, and represents "We're waiting for an ID3 event from the sensor"
+		l0 {
+			enforce OK3 := 0, ID3 := 0 if (OK3 and ID3); // this needs to go first for priority
+			enforce OK3 := 0 if OK3;
+			enforce PUMP3 := 0 if PUMP3;
+
+			-> l0 on (!ID3 and !OK3 and !PUMP3);
+
+			-> l1 on (ID3 and !OK3 and !PUMP3);
+			
+			//-> violation on (PUMP3) recover PUMP3 := 0;	
+			//-> violation on (ID3 and OK3) recover ID3 := 0, OK3:= 0;	
+		}
+
+		//l1 is "we are waiting for a sensor update to determine if we could pump or not"
+		l1 {
+			enforce ID3 := 0, OK3 := 0 if ID3; // If the sensor ID3s again it is considered malicious  
+            enforce PUMP3 := 0 if !OK3; // Don't pump if the sensor says dont!
+			//enforce PUMP3 := 1 if OK3; // Must pump if sensor says ok - REMOVED As controller using "sensor fusion" and redundancy in sensors
+
+			-> l0 on ((!ID3 and OK3 and PUMP3) or (!ID3 and !OK3 and !PUMP3) or (!ID3 and OK3 and !PUMP3)); // straight back to 10
+		}
+	}
+}
+
+policy s4 of water4 {
+	states {
+
+		//first state is initial, and represents "We're waiting for an ID4 event from the sensor"
+		l0 {
+			enforce OK4 := 0, ID4 := 0 if (OK4 and ID4); // this needs to go first for priority
+			enforce OK4 := 0 if OK4;
+			enforce PUMP4 := 0 if PUMP4;
+
+			-> l0 on (!ID4 and !OK4 and !PUMP4);
+
+			-> l1 on (ID4 and !OK4 and !PUMP4);
+			
+			//-> violation on (PUMP4) recover PUMP4 := 0;	
+			//-> violation on (ID4 and OK4) recover ID4 := 0, OK4:= 0;	
+		}
+
+		//l1 is "we are waiting for a sensor update to determine if we could pump or not"
+		l1 {
+			enforce ID4 := 0, OK4 := 0 if ID4; // If the sensor ID4s again it is considered malicious  
+            enforce PUMP4 := 0 if !OK4; // Don't pump if the sensor says dont!
+			//enforce PUMP4 := 1 if OK4; // Must pump if sensor says ok - REMOVED As controller using "sensor fusion" and redundancy in sensors
+
+			-> l0 on ((!ID4 and OK4 and PUMP4) or (!ID4 and !OK4 and !PUMP4) or (!ID4 and OK4 and !PUMP4)); // straight back to 10
+		}
+	}
+}
