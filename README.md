@@ -301,7 +301,9 @@ Running this example will show that the robot eventually drives its way to the d
 
 ## Composing Policies
 
-Known limitations: Verilog only
+Known limitations: 
+* Verilog only
+* Internal varialbes (clocks and constants) need to have independent names (in monolithic composition template only)
 
 ### A Word of Caution
 Ensure your transitions are described completely in the erte file. 
