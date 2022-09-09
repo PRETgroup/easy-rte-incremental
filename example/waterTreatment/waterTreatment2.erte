@@ -10,7 +10,7 @@ interface of waterTreatment2 {
 	out bool EnFilterPump; 
 }
 
-policy s1 of waterTreatment1 {
+policy s1 of waterTreatment2 {
 	internals {
 		dtimer_t t;
         constant uint16_t maxTicks := 100;

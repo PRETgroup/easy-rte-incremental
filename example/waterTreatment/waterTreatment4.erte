@@ -1,18 +1,20 @@
-function waterTreatment3;
-interface of waterTreatment3 {
+function waterTreatment4;
+interface of waterTreatment4 {
     //PLANT to CONTROLLER
 	in bool ScreenFlow;
 	in bool ClarifierTankReady;
 	in bool HighFilterPressure;
 	in bool PostFilterFlow;
+	in bool ChlorineFlow;
 
     // CONTROLLER to PLANT
 	out bool AddFloc; 
 	out bool EnFilterPump; 
 	out bool EnChemicalPump; 
+	out bool AddChlorine; 
 }
 
-policy s1 of waterTreatment3 {
+policy s1 of waterTreatment4 {
 	internals {
 		dtimer_t t;
         constant uint16_t maxTicks := 100;
@@ -53,7 +55,7 @@ policy s1 of waterTreatment3 {
 	}
 }
 
-policy s2 of waterTreatment3 {
+policy s2 of waterTreatment4 {
 	states {
 
 		l0 {
@@ -79,7 +81,7 @@ policy s2 of waterTreatment3 {
 	}
 }
 
-policy s3 of waterTreatment3 {
+policy s3 of waterTreatment4 {
 	internals {
 		dtimer_t t;
         constant uint16_t maxTicks := 100;
@@ -116,6 +118,47 @@ policy s3 of waterTreatment3 {
 			-> l2 on (PostFilterFlow && EnChemicalPump);
 			-> l3 on (!PostFilterFlow && EnChemicalPump && t <= maxTicks);
 			-> violation on (!PostFilterFlow && EnChemicalPump && t > maxTicks) recover EnChemicalPump := 0;	
+		}
+	}
+}
+
+policy s4 of waterTreatment4 {
+	internals {
+		dtimer_t t;
+        constant uint16_t maxTicks := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!ChlorineFlow && !AddChlorine);
+			-> l1 on (ChlorineFlow && !AddChlorine): t := 0;
+			-> l2 on (ChlorineFlow && AddChlorine);
+			-> violation on (!ChlorineFlow && AddChlorine) recover AddChlorine := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ChlorineFlow && !AddChlorine);
+			-> l1 on (ChlorineFlow && !AddChlorine && t <= maxTicks);
+			-> l2 on (ChlorineFlow && AddChlorine && t <= maxTicks);
+			-> l3 on (!ChlorineFlow && AddChlorine): t:=0;	
+			-> violation on (ChlorineFlow && !AddChlorine && t > maxTicks) recover AddChlorine := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!ChlorineFlow && !AddChlorine);
+			-> l2 on (ChlorineFlow && AddChlorine);
+			-> l3 on (!ChlorineFlow && AddChlorine): t:=0;
+			-> violation on (ChlorineFlow && !AddChlorine) recover AddChlorine := 1;	
+		}
+
+		l3 {
+			-> l0 on (!ChlorineFlow && !AddChlorine && t <= maxTicks);
+			-> l1 on (ChlorineFlow && !AddChlorine): t:=0;
+			-> l2 on (ChlorineFlow && AddChlorine);
+			-> l3 on (!ChlorineFlow && AddChlorine && t <= maxTicks);
+			-> violation on (!ChlorineFlow && AddChlorine && t > maxTicks) recover AddChlorine := 0;	
 		}
 	}
 }
