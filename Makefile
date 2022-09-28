@@ -28,6 +28,8 @@ c_enf: $(PROJECT)
 #convert verilog build instruction to verilog target
 verilog_enf: $(PROJECT)_V
 
+comp: $(PROJECT)_COMP
+
 easy-rte-c: rtec/* rtedef/*
 	go get github.com/PRETgroup/goFB/goFB
 	go build -o easy-rte-c -i ./rtec/main
@@ -41,6 +43,9 @@ easy-rte-parser: rteparser/* rtedef/*
 
 easy-rte-parser-local: rteparser/* rtedef/*
 	go build -o easy-rte-parser -i ./rteparser/main
+
+easy-rte-comp: rtecomp/*
+	go build -o easy-rte-comp -i ./rtecomp
 
 run_cbmc: default 
 	cbmc example/$(PROJECT)/cbmc_main_$(PROJECT).c example/$(PROJECT)/F_$(PROJECT).c
@@ -60,9 +65,16 @@ $(PROJECT): ./example/$(PROJECT)/$(FILE).c
 #convert $(PROJECT)_V into the verilog names
 $(PROJECT)_V: ./example/$(PROJECT)/$(FILE).sv
 
+#convert $(PROJECT)_COMP into the xml names
+$(PROJECT)_COMP: ./example/$(PROJECT)/$(FILE)_comp.xml
+
 #generate the xml from the erte files
 %.xml: %.erte
 	./easy-rte-parser $(PARSEARGS) -i $^ -o $@
+
+#generate the comp xml from the xml files
+%_comp.xml: %.xml
+	./easy-rte-comp -i $^ -o $@
 
 #generate the Verilog sources from the xml files
 %.sv: %.xml
