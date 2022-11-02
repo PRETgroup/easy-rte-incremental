@@ -33,3 +33,7 @@ Example ABC
         make c_enf PROJECT=abc FILE=ab_and_ac  COMPILEARGS=-seriesComposition
         gcc example/abc/series_ab_and_ac_main.c example/abc/series_F_ab_and_ac.c -o example_abc_series
         ./example_abc_series
+
+Manual Series ABC
+    gcc example/abc/manual_series_ab_and_ac_main.c example/abc/manual_series_F_ab_and_ac.c -o example_abc_manual_series
+    ./example_abc_manual_series
