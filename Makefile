@@ -60,7 +60,7 @@ $(PROJECT): ./example/$(PROJECT)/$(FILE).c
 
 #generate the C sources from the erte files
 %.c: %.xml
-	./easy-rte-c -i $^ -o example/$(PROJECT)
+	./easy-rte-c $(COMPILEARGS) -i $^ -o example/$(PROJECT)
 
 #convert $(PROJECT)_V into the verilog names
 $(PROJECT)_V: ./example/$(PROJECT)/$(FILE).sv
