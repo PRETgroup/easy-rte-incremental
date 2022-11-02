@@ -308,31 +308,56 @@ Known limitations:
 ### A Word of Caution
 Ensure your transitions are described completely in the erte file. 
 
-For example: these two snipets are not guaranteed to result in the same behaviour.
+For example: these two snipets are not guaranteed to result in the same behaviour. The desired outcome is for violation if B is not present within <= 5 (as per clock v1).
 
 ```
+Policy 1.0
 -> s1 on B;
 -> violation on (v1 >= 5);
 ```
 
 ```
+Policy 1.1
 -> s1 on B;
 -> violation on (v1 >= 5) and (!B);
 ```
 
 _The reason for the lack of a guarantee: If there are other policies that are composed with the above examples, the order in which transition conditions are tested becomes important, and this order is not controllable._
 
-_While it may be tempting to write conditions as if they are assessed sequentially (the top most example above) this will likely cause more heartbreak and headache than simply writing complete transitions._
+_For example, take the below example compositions, where the order of these transitions is reversed. Policy 1.0 is obviously no longer correct when v1 = 5 and B is present, the policy will violate._
+
+```
+Policy 1.0 Composed
+-> ..
+-> violation on (v1 >= 5);
+-> ..
+-> s1 on B;
+```
+```
+Policy 1.1 Composed
+-> ..
+-> violation on (v1 >= 5) and (!B);
+-> ..
+-> s1 on B;
+```
+
+_While it may be tempting to write conditions as if they are assessed sequentially (Policy 1.0) this will likely cause more heartbreak and headache than simply writing complete transitions._
 
 _Perhaps at some point we can alter the compiler to test all non-violating transitions before violation ones, as this may save time in the erte file creation, but note this isn't truly in the spirit of a TA/DTA._
 
 ### Monolithic Composition
-* For hardware synthesis use
+* For Verilog hardware synthesis use
 `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product COMPILEARGS=-synthesis`
+		
+	_Produces verilog which can be simulated (tested in ModelSim) and synthesised (tested in Quartus)._
 
 * For EBMC use `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product`
 
-### Parallel Composition
-* For hardware synthesis use `make verilog_enf PROJECT=abc5 COMPILEARGS=-parallelComposition`
+* For C Software use
+	* `make c_enf PROJECT=abc FILE=ab_and_ac PARSEARGS=-product` 
+	* `gcc example/abc/ab_and_ac_main.c example/abc/F_ab_and_ac.c -o example_abc_monolithic`
 
-Produces verilog which can be simulated (tested in ModelSim) and synthesised (tested in Quartus).
+### Parallel Composition
+* For Verilog hardware synthesis use `make verilog_enf PROJECT=abc5 COMPILEARGS=-parallelComposition`
+
+	_Produces verilog which can be simulated (tested in ModelSim) and synthesised (tested in Quartus)._
