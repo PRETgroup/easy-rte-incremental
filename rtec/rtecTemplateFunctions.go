@@ -1,6 +1,7 @@
 package rtec
 
 import (
+	"math"
 	"regexp"
 	"strings"
 
@@ -119,4 +120,12 @@ func getAllPolicyEnfInfo(function rtedef.EnforcedFunction) []rtedef.PEnforcer {
 
 func sub(a, b int) int {
 	return a - b
+}
+
+func times(a, b int) int {
+	return a * b
+}
+
+func twoToThePower(a int) int {
+	return int(math.Pow(2, float64(a)))
 }
