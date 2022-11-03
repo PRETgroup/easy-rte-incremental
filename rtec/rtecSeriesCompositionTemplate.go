@@ -22,12 +22,12 @@ void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name
 				//select a transition to solve the problem
 				{{$solution := $pfbEnf.SolveViolationTransition $tr true}}
 				{{if $solution.Comment}}//{{$solution.Comment}}{{end}}
-				//{{range $soleI, $sole := $solution.Expressions}}{{$sol := getCECCTransitionCondition $block (compileExpression $sole)}}{{$sol.IfCond}};
+				// {{range $soleI, $sole := $solution.Expressions}}{{$sol := getCECCTransitionCondition $block (compileExpression $sole)}}{{$sol.IfCond}};
 				
 				// Set of acceptable inputs
-				{{getAcceptableInputs (compileExpression $sole) $block}}
+				{{getAcceptableOptions (compileExpression $sole) $block.InputVars $block.Name "inputs"}}
 
-				input_option_intersection(acceptableInputs, numAccept, inputOptions);
+				input_option_intersection(acceptableOptions, numAccept, inputOptions);
 				{{end}}
 			} {{end}}{{end}}
 			
@@ -46,7 +46,7 @@ void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name
 {{if not $pfbEnf}}//{{$pol.Name}} is broken!
 {{else}}{{/* this is where the policy comes in */}}//OUTPUT POLICY {{$pol.Name}} BEGIN
 //This will run the input enforcer for {{$block.Name}}'s policy {{$pol.Name}}
-void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs) {
+void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t* outputOptions) {
 	//advance timers
 	{{range $varI, $var := $pfbEnf.OutputPolicy.GetDTimers}}
 	me->{{$var.Name}}++;{{end}}
@@ -62,7 +62,13 @@ void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Nam
 				{{$solution := $pfbEnf.SolveViolationTransition $tr false}}
 				{{if $solution.Comment}}//{{$solution.Comment}}{{end}}
 				//{{range $soleI, $sole := $solution.Expressions}}{{$sol := getCECCTransitionCondition $block (compileExpression $sole)}}{{$sol.IfCond}};
-				{{$solution.Expressions}}
+
+				// Set of acceptable outputs
+				{{getAcceptableOptions (compileExpression $sole) $block.OutputVars $block.Name "outputs"}}
+
+				// Reduce the set of outputOptions 
+				output_option_intersection(acceptableOptions, numAccept, outputOptions);
+
 				{{end}}
 			} {{end}}{{end}}
 
@@ -70,7 +76,9 @@ void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Nam
 
 		{{end}}
 	}
+}
 
+void {{$block.Name}}_transition_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs){
 	//select transition to advance state
 	switch(me->_policy_{{$pol.Name}}_state) {
 		{{range $sti, $st := $pol.States}}case POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_{{$st.Name}}:
@@ -473,7 +481,7 @@ var cSeriesCompositionTemplateFuncMap = template.FuncMap{
 	"twoToThePower":         twoToThePower,
 	"getBinaryCombinations": getBinaryCombinations,
 	"getBADString":          getBADString,
-	"getAcceptableInputs":   getAcceptableInputs,
+	"getAcceptableOptions":  getAcceptableOptions,
 }
 
 var cSeriesCompositionTemplates = template.Must(template.New("").Funcs(cSeriesCompositionTemplateFuncMap).Parse(rtecSeriesCompositionTemplate))

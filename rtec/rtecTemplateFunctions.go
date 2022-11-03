@@ -155,7 +155,45 @@ func getBADString(count int) string {
 	return combinations + "};"
 }
 
-func getAcceptableInputs(recoveryExpression string, inputsExpression rtedef.EnforcedFunction) string {
-	fmt.Println(inputsExpression)
-	return "TODO"
+func getAcceptableOptions(recoveryExpression string, outputInterface []rtedef.Variable, blockName string, interfaceDirection string) string {
+	var splitString []string = strings.Split(recoveryExpression, "=")
+	var recoverOutput string = strings.Replace(splitString[0], " ", "", -1)
+	var recoverValue int = -3
+	var recoverBit int
+	recoverValue, _ = strconv.Atoi(strings.Replace(splitString[1], " ", "", -1))
+
+	for i, v := range outputInterface {
+		if v.Name == recoverOutput {
+			recoverBit = len(outputInterface) - 1 - i
+			fmt.Println("Recover " + v.Name + " (bit " + strconv.Itoa(recoverBit) + ") by setting it to" + splitString[1])
+		}
+	}
+
+	var splitBinaryCombinations []string = strings.Split(strings.Replace(getBinaryCombinations(len(outputInterface)), "\t", "", -1), "\n")
+	fmt.Print("\tAll options \t\t")
+	fmt.Print(splitBinaryCombinations)
+	fmt.Print("\n")
+	var acceptableOutputs []string
+	for i, possibleOutput := range splitBinaryCombinations {
+		if i > 0 { // Skip first
+			// fmt.Println(possibleOutput)
+			var possibleOutputTweak string = strings.Replace(possibleOutput, "{", "", -1)
+			possibleOutputTweak = strings.Replace(possibleOutputTweak, "},", "", -1)
+			var values []string = strings.Split(possibleOutputTweak, ",")
+			// fmt.Println(values)
+
+			var possibleOutputRecoveryValue int
+			possibleOutputRecoveryValue, _ = strconv.Atoi(values[len(values)-recoverBit-1])
+			// fmt.Println("I think " + recoverOutput + " is in bit " + strconv.Itoa(recoverBit) + " and has a value of " + strconv.Itoa(possibleOutputRecoveryValue))
+			if possibleOutputRecoveryValue == recoverValue {
+				// Keep
+				acceptableOutputs = append(acceptableOutputs, strings.Replace(possibleOutput, "},", "}", -1))
+			} // else discard
+		}
+	}
+	fmt.Print("\tAcceptable options \t")
+	fmt.Print(acceptableOutputs)
+	fmt.Print("\n")
+
+	return "const uint8_t numAccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t acceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
 }
