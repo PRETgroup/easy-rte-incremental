@@ -109,17 +109,36 @@ void output_option_intersection(const outputs_ab_and_ac_t* acceptableOutputs, co
 	}
 }
 
+bool compareInputs(const inputs_ab_and_ac_t* inp1, const inputs_ab_and_ac_t* inp2) {
+	return (inp1->A == inp2->A);
+}
+
+bool isBadInput(const inputs_ab_and_ac_t* inputs) {
+	const inputs_ab_and_ac_t* badInput = &unacceptableInput;
+	return compareInputs(inputs, badInput);
+}
+bool compareOutputs(const outputs_ab_and_ac_t* out1, const outputs_ab_and_ac_t* out2) {
+	return ((out1->B == out2->B) && (out1->C == out2->C));
+}
+
+bool isBadOutput(const outputs_ab_and_ac_t* outputs) {
+	const outputs_ab_and_ac_t* badOutput = &unacceptableOutput;
+	return compareOutputs(outputs, badOutput);
+}
+
 // Select Input
 void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions) {
 	// TODO: replace with min-edit/min-select/rand-select
 	// printf("Current %d, %d\n", inputs->x_accel, inputs->x_hold);
 	for (uint16_t i = 0; i < INPUT_OPTIONS; i++) {
 		if (
-			(inputOptions[i].A != BAD)
+			// (inputOptions[i].A != BAD)
+			!isBadInput(&inputOptions[i])
 			) {
     		// printf("Acceptable: x_accel:%d, x_hold:%d, y_accel:%d, y_hold:%d, z_accel:%d, z_hold:%d, rpm_up:%d, rpm_hold:%d\r\n", inputOptions[i].x_accel, inputOptions[i].x_hold, inputOptions[i].y_accel, inputOptions[i].y_hold, inputOptions[i].z_accel, inputOptions[i].z_hold, inputOptions[i].rpm_up, inputOptions[i].rpm_hold);
 			if (
-				(inputOptions[i].A == inputs->A)
+				compareInputs(&inputOptions[i], inputs)
+				// (inputOptions[i].A == inputs->A)
 				) {
 				// printf("No input edit needed\n");
 				return;
@@ -130,7 +149,8 @@ void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions) 
 	for (uint16_t i = 0; i < INPUT_OPTIONS; i++) {
 		// printf("i: %d\n", i);
 		if (
-			(inputOptions[i].A != BAD)
+			// (inputOptions[i].A != BAD)
+			!isBadInput(&inputOptions[i])
 			) {
 			// printf("Good option %d, %d, %d\n", inputOptions[i].rpm_up, inputOptions[i].x_accel, inputOptions[i].x_hold);
 			printf("Input edited\n");
@@ -146,12 +166,14 @@ void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOpti
 	// printf("Current %d, %d\n", outputs->x_accel, outputs->x_hold);
 	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
 		if (
-			(outputOptions[i].B != BAD) &&
-			(outputOptions[i].C != BAD)
+			// (outputOptions[i].B != BAD) &&
+			// (outputOptions[i].C != BAD)
+			!isBadOutput(&outputOptions[i])
 			) {
     		// printf("Acceptable: B:%d, C:%d\r\n", outputOptions[i].B, outputOptions[i].C);
 			if (
-				(outputOptions[i].B == outputs->B) && (outputOptions[i].C == outputs->C)
+				// (outputOptions[i].B == outputs->B) && (outputOptions[i].C == outputs->C)
+				compareOutputs(&outputOptions[i], outputs)
 				) {
 				// printf("No output edit needed\n");
     			// printf("Selected: B:%d, C:%d\r\n", outputs->B, outputs->C);
@@ -163,8 +185,9 @@ void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOpti
 	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
 		// printf("i: %d\n", i);
 		if (
-			(outputOptions[i].B != BAD) &&
-			(outputOptions[i].C != BAD)
+			// (outputOptions[i].B != BAD) &&
+			// (outputOptions[i].C != BAD)
+			!isBadOutput(&outputOptions[i])
 			) {
 			// printf("Good option %d, %d\n", outputOptions[i].B, outputOptions[i].C);
 			printf("Output Edited\n");
