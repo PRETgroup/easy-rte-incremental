@@ -1,8 +1,10 @@
 package rtec
 
 import (
+	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/PRETgroup/easy-rte/rtedef"
@@ -128,4 +130,32 @@ func times(a, b int) int {
 
 func twoToThePower(a int) int {
 	return int(math.Pow(2, float64(a)))
+}
+
+func getBinaryCombinations(numberBits int) string {
+	var combinations string = ""
+	for i := 0; i < twoToThePower(numberBits); i++ {
+		thisLine := "\n\t{" + fmt.Sprintf("%."+strconv.Itoa(numberBits)+"b", i) + "},"
+		thisLine = strings.Replace(thisLine, "0", "0,", -1)
+		thisLine = strings.Replace(thisLine, "1", "1,", -1)
+		thisLine = strings.Replace(thisLine, "1,}", "1}", -1)
+		thisLine = strings.Replace(thisLine, "0,}", "0}", -1)
+		combinations = combinations + thisLine
+	}
+
+	return combinations
+}
+
+func getBADString(count int) string {
+	var combinations string = "{BAD"
+	for i := 1; i < count; i++ {
+		combinations = combinations + ", BAD"
+	}
+
+	return combinations + "};"
+}
+
+func getAcceptableInputs(recoveryExpression string, inputsExpression rtedef.EnforcedFunction) string {
+	fmt.Println(inputsExpression)
+	return "TODO"
 }
