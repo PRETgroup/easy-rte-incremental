@@ -13,6 +13,7 @@ outputs_ab_and_ac_t possibleOutputs[OUTPUT_OPTIONS] = {
 	{1,0},
 	{1,1},
 };
+
 const inputs_ab_and_ac_t unacceptableInput = {BAD};
 const outputs_ab_and_ac_t unacceptableOutput = {BAD, BAD};
 
@@ -64,6 +65,26 @@ void ab_and_ac_run_via_enforcer(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t
 	
 }
 
+
+bool compareInputs(const inputs_ab_and_ac_t* inp1, const inputs_ab_and_ac_t* inp2) {
+	return (inp1->A == inp2->A);
+}
+
+bool isBadInput(const inputs_ab_and_ac_t* inputs) {
+	const inputs_ab_and_ac_t* badInput = &unacceptableInput;
+	return compareInputs(inputs, badInput);
+}
+
+bool compareOutputs(const outputs_ab_and_ac_t* out1, const outputs_ab_and_ac_t* out2) {
+	return ((out1->B == out2->B) && (out1->C == out2->C));
+}
+
+bool isBadOutput(const outputs_ab_and_ac_t* outputs) {
+	const outputs_ab_and_ac_t* badOutput = &unacceptableOutput;
+	return compareOutputs(outputs, badOutput);
+}
+
+
 // Input Intersection
 void input_option_intersection(const inputs_ab_and_ac_t* acceptableInputs, const uint8_t numAccept, inputs_ab_and_ac_t* inputOptions) {
 	// for every option
@@ -73,14 +94,15 @@ void input_option_intersection(const inputs_ab_and_ac_t* acceptableInputs, const
 
 		bool accept = false;
 		for (uint8_t j = 0; j < numAccept; j++) {
-			if ((inputOptions[i].A == acceptableInputs[j].A)) {
+			// if ((inputOptions[i].A == acceptableInputs[j].A)) {
+			if (compareInputs(&inputOptions[i], &acceptableInputs[j])) {
 				accept = true;
 			} 
 		}
 		if (!accept) {
 			// printf("Deny: %d\n", inputOptions[i].A);
 			memcpy(&inputOptions[i], &unacceptableInput, BYTES_PER_INPUT);
-		} else {
+		//} else {
 			// printf("Accept: %d\n", inputOptions[i].A);
 		}
 	}
@@ -96,7 +118,8 @@ void output_option_intersection(const outputs_ab_and_ac_t* acceptableOutputs, co
 		bool accept = false;
 		for (uint8_t j = 0; j < numAccept; j++) {
 			// printf("Acceptable Input: %d, %d\n", acceptableOutputs[j].B, acceptableOutputs[j].C);
-			if ((outputOptions[i].B == acceptableOutputs[j].B) && (outputOptions[i].C == acceptableOutputs[j].C)) {
+			// if ((outputOptions[i].B == acceptableOutputs[j].B) && (outputOptions[i].C == acceptableOutputs[j].C)) {
+			if (compareOutputs(&outputOptions[i], &acceptableOutputs[j])) {
 				accept = true;
 			} 
 		}
@@ -107,23 +130,6 @@ void output_option_intersection(const outputs_ab_and_ac_t* acceptableOutputs, co
 			// printf("Accept: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
 		}
 	}
-}
-
-bool compareInputs(const inputs_ab_and_ac_t* inp1, const inputs_ab_and_ac_t* inp2) {
-	return (inp1->A == inp2->A);
-}
-
-bool isBadInput(const inputs_ab_and_ac_t* inputs) {
-	const inputs_ab_and_ac_t* badInput = &unacceptableInput;
-	return compareInputs(inputs, badInput);
-}
-bool compareOutputs(const outputs_ab_and_ac_t* out1, const outputs_ab_and_ac_t* out2) {
-	return ((out1->B == out2->B) && (out1->C == out2->C));
-}
-
-bool isBadOutput(const outputs_ab_and_ac_t* outputs) {
-	const outputs_ab_and_ac_t* badOutput = &unacceptableOutput;
-	return compareOutputs(outputs, badOutput);
 }
 
 // Select Input
@@ -154,7 +160,7 @@ void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions) 
 			) {
 			// printf("Good option %d, %d, %d\n", inputOptions[i].rpm_up, inputOptions[i].x_accel, inputOptions[i].x_hold);
 			printf("Input edited\n");
-			inputs->A = inputOptions[i].A;
+			memcpy(inputs, &inputOptions[i], BYTES_PER_INPUT);
 			return;
 		}
 	}
@@ -191,8 +197,7 @@ void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOpti
 			) {
 			// printf("Good option %d, %d\n", outputOptions[i].B, outputOptions[i].C);
 			printf("Output Edited\n");
-			outputs->B = outputOptions[i].B;
-			outputs->C = outputOptions[i].C;
+			memcpy(outputs, &outputOptions[i], BYTES_PER_OUTPUT);
 
 			return;
 		}

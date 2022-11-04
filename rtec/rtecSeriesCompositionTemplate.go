@@ -274,6 +274,25 @@ void {{$block.Name}}_run_via_enforcer(enforcervars_{{$block.Name}}_t* me, inputs
 	{{end}}
 }
 
+
+bool compareInputs(const inputs_{{$block.Name}}_t* inp1, const inputs_{{$block.Name}}_t* inp2) {
+	return ({{range $index, $var := $block.InputVars}}(inp1->{{$var.Name}} == inp2->{{$var.Name}}){{if $var.ArraySize}}[{{$var.ArraySize}}]{{end}} {{if $index}}{{else}}&&{{end}} {{end}});
+}
+
+bool isBadInput(const inputs_{{$block.Name}}_t* inputs) {
+	const inputs_{{$block.Name}}_t* badInput = &unacceptableInput;
+	return compareInputs(inputs, badInput);
+}
+
+bool compareOutputs(const outputs_{{$block.Name}}_t* out1, const outputs_{{$block.Name}}_t* out2) {
+	return ({{range $index, $var := $block.OutputVars}}(out1->{{$var.Name}} == out2->{{$var.Name}}){{if $var.ArraySize}}[{{$var.ArraySize}}]{{end}} {{if $index}}{{else}}&&{{end}} {{end}});
+}
+
+bool isBadOutput(const outputs_{{$block.Name}}_t* outputs) {
+	const outputs_{{$block.Name}}_t* badOutput = &unacceptableOutput;
+	return compareOutputs(outputs, badOutput);
+}
+
 // Input Intersection
 void input_option_intersection(const inputs_{{$block.Name}}_t* acceptableInputs, const uint16_t numAccept, inputs_{{$block.Name}}_t* inputOptions) {
 	// for every option
@@ -283,7 +302,7 @@ void input_option_intersection(const inputs_{{$block.Name}}_t* acceptableInputs,
 
 		bool accept = false;
 		for (uint16_t j = 0; j < numAccept; j++) {
-			if ((inputOptions[i].A == acceptableInputs[j].A)) {
+			if (compareInputs(&inputOptions[i], &acceptableInputs[j])) {
 				accept = true;
 			} 
 		}
@@ -306,7 +325,7 @@ void output_option_intersection(const outputs_{{$block.Name}}_t* acceptableOutpu
 		bool accept = false;
 		for (uint16_t j = 0; j < numAccept; j++) {
 			// printf("Acceptable Input: %d, %d\n", acceptableOutputs[j].B, acceptableOutputs[j].C);
-			if ((outputOptions[i].B == acceptableOutputs[j].B) && (outputOptions[i].C == acceptableOutputs[j].C)) {
+			if (compareOutputs(&outputOptions[i], &acceptableOutputs[j])) {
 				accept = true;
 			} 
 		}
@@ -317,24 +336,6 @@ void output_option_intersection(const outputs_{{$block.Name}}_t* acceptableOutpu
 			// printf("Accept: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
 		}
 	}
-}
-
-bool compareInputs(const inputs_{{$block.Name}}_t* inp1, const inputs_{{$block.Name}}_t* inp2) {
-	return (inp1->A == inp2->A);
-}
-
-bool isBadInput(const inputs_{{$block.Name}}_t* inputs) {
-	const inputs_{{$block.Name}}_t* badInput = &unacceptableInput;
-	return compareInputs(inputs, badInput);
-}
-
-bool compareOutputs(const outputs_{{$block.Name}}_t* out1, const outputs_{{$block.Name}}_t* out2) {
-	return ((out1->B == out2->B) && (out1->C == out2->C));
-}
-
-bool isBadOutput(const outputs_{{$block.Name}}_t* outputs) {
-	const outputs_{{$block.Name}}_t* badOutput = &unacceptableOutput;
-	return compareOutputs(outputs, badOutput);
 }
 
 // Select Input
