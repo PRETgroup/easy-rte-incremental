@@ -276,7 +276,7 @@ void {{$block.Name}}_run_via_enforcer(enforcervars_{{$block.Name}}_t* me, inputs
 
 
 bool compareInputs(const inputs_{{$block.Name}}_t* inp1, const inputs_{{$block.Name}}_t* inp2) {
-	return ({{range $index, $var := $block.InputVars}}(inp1->{{$var.Name}} == inp2->{{$var.Name}}){{if $var.ArraySize}}[{{$var.ArraySize}}]{{end}} {{if $index}}{{else}}&&{{end}} {{end}});
+	return ({{range $index, $var := $block.InputVars}}(inp1->{{$var.Name}} == inp2->{{$var.Name}}){{if $var.ArraySize}}[{{$var.ArraySize}}]{{end}} {{if isNotLastElement $index $block.InputVars}}&&{{end}} {{end}});
 }
 
 bool isBadInput(const inputs_{{$block.Name}}_t* inputs) {
@@ -285,7 +285,7 @@ bool isBadInput(const inputs_{{$block.Name}}_t* inputs) {
 }
 
 bool compareOutputs(const outputs_{{$block.Name}}_t* out1, const outputs_{{$block.Name}}_t* out2) {
-	return ({{range $index, $var := $block.OutputVars}}(out1->{{$var.Name}} == out2->{{$var.Name}}){{if $var.ArraySize}}[{{$var.ArraySize}}]{{end}} {{if $index}}{{else}}&&{{end}} {{end}});
+	return ({{range $index, $var := $block.OutputVars}}(out1->{{$var.Name}} == out2->{{$var.Name}}){{if $var.ArraySize}}[{{$var.ArraySize}}]{{end}} {{if isNotLastElement $index $block.OutputVars}}&&{{end}} {{end}});
 }
 
 bool isBadOutput(const outputs_{{$block.Name}}_t* outputs) {
@@ -483,6 +483,7 @@ var cSeriesCompositionTemplateFuncMap = template.FuncMap{
 	"getBinaryCombinations": getBinaryCombinations,
 	"getBADString":          getBADString,
 	"getAcceptableOptions":  getAcceptableOptions,
+	"isNotLastElement":      isNotLastElement,
 }
 
 var cSeriesCompositionTemplates = template.Must(template.New("").Funcs(cSeriesCompositionTemplateFuncMap).Parse(rtecSeriesCompositionTemplate))

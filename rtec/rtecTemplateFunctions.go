@@ -155,6 +155,10 @@ func getBADString(count int) string {
 	return combinations + "};"
 }
 
+func isNotLastElement(index int, InputVars []rtedef.Variable) bool {
+	return (index < len(InputVars)-1)
+}
+
 func getAcceptableOptions(recoveryExpression string, outputInterface []rtedef.Variable, blockName string, interfaceDirection string) string {
 	var splitString []string = strings.Split(recoveryExpression, "=")
 	var recoverOutput string = strings.Replace(splitString[0], " ", "", -1)
