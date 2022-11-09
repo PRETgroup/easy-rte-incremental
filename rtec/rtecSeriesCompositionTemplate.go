@@ -361,7 +361,7 @@ void select_input(inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* in
 			// (inputOptions[i].A != BAD)
 			!isBadInput(&inputOptions[i])
 			) {
-			printf("Input edited\n");
+			// printf("Input edited\n");
 			memcpy(inputs, &inputOptions[i], BYTES_PER_INPUT);
 			return;
 		}
@@ -389,7 +389,7 @@ void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t
 		if (
 			!isBadOutput(&outputOptions[i])
 			) {
-			printf("Output Edited\n");
+			// printf("Output Edited\n");
 			memcpy(outputs, &outputOptions[i], BYTES_PER_OUTPUT);
 			return;
 		}

@@ -169,14 +169,14 @@ func getAcceptableOptions(recoveryExpression string, outputInterface []rtedef.Va
 	for i, v := range outputInterface {
 		if v.Name == recoverOutput {
 			recoverBit = len(outputInterface) - 1 - i
-			fmt.Println("Recover " + v.Name + " (bit " + strconv.Itoa(recoverBit) + ") by setting it to" + splitString[1])
+			// fmt.Println("Recover " + v.Name + " (bit " + strconv.Itoa(recoverBit) + ") by setting it to" + splitString[1])
 		}
 	}
 
 	var splitBinaryCombinations []string = strings.Split(strings.Replace(getBinaryCombinations(len(outputInterface)), "\t", "", -1), "\n")
-	fmt.Print("\tAll options \t\t")
-	fmt.Print(splitBinaryCombinations)
-	fmt.Print("\n")
+	// fmt.Print("\tAll options \t\t")
+	// fmt.Print(splitBinaryCombinations)
+	// fmt.Print("\n")
 	var acceptableOutputs []string
 	for i, possibleOutput := range splitBinaryCombinations {
 		if i > 0 { // Skip first
@@ -195,9 +195,9 @@ func getAcceptableOptions(recoveryExpression string, outputInterface []rtedef.Va
 			} // else discard
 		}
 	}
-	fmt.Print("\tAcceptable options \t")
-	fmt.Print(acceptableOutputs)
-	fmt.Print("\n")
+	// fmt.Print("\tAcceptable options \t")
+	// fmt.Print(acceptableOutputs)
+	// fmt.Print("\n")
 
 	return "const uint16_t numAccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t acceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
 }
