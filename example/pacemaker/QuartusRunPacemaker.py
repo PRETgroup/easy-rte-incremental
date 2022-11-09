@@ -95,7 +95,8 @@ if __name__ == "__main__":
 	basedir = "example" 
 
 	composition_methods = ["monolithic", "parallel"]
-	policies = ["p1", "p1_and_p2", "p1_and_p2_and_p3", "p1_and_p2_and_p3_and_p4", "p1_and_p2_and_p3_and_p4_and_p5"]
+	# policies = ["p1", "p1_and_p2", "p1_and_p2_and_p3", "p1_and_p2_and_p3_and_p4", "p1_and_p2_and_p3_and_p4_and_p5"]
+	policies = ["p1_and_p2_and_p3_and_p4_and_p5_and_p6"]
 	
 	# For debugging purposes
 	# composition_methods = ["monolithic"]

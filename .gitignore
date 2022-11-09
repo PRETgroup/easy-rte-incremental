@@ -21,5 +21,9 @@ example/*/*
 !*.erte
 !*main.c
 !*.md
-go.sum
-go.mod
+
+*.sum
+*.mod
+*.mti
+*.mpf
+easy-rte-comp
