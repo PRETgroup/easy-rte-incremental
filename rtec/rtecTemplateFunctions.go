@@ -199,5 +199,5 @@ func getAcceptableOptions(recoveryExpression string, outputInterface []rtedef.Va
 	fmt.Print(acceptableOutputs)
 	fmt.Print("\n")
 
-	return "const uint8_t numAccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t acceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
+	return "const uint16_t numAccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t acceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
 }
