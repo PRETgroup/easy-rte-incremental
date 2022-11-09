@@ -1,8 +1,8 @@
 function ab_and_ac;
 interface of ab_and_ac {
-	in bool A;  //in here means that they're going from PLANT to CONTROLLER
-	out bool B; //out here means that they're going from CONTROLLER to PLANT
-	out bool C; //out here means that they're going from CONTROLLER to PLANT
+	in uint8_t A;  //in here means that they're going from PLANT to CONTROLLER
+	out uint8_t B; //out here means that they're going from CONTROLLER to PLANT
+	out uint8_t C; //out here means that they're going from CONTROLLER to PLANT
 }
 
 policy ab of ab_and_ac {
