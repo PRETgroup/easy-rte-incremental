@@ -1,9 +1,9 @@
 #include "manual_series_F_ab_and_ac.h"
-#include "save_results.h"
 #include <stdio.h>
 #include <stdint.h>
-#include <time.h>
 
+#include "save_results.h"
+#include <time.h>
 #define RUNS 10
 #define TICKS_PER_RUN 10000000
 #define RUN_REFERENCE "ab_and_ac"

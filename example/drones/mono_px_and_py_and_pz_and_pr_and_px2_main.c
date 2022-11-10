@@ -1,16 +1,20 @@
 #include "F_px_and_py_and_pz_and_pr_and_px2.h"
 #include <stdio.h>
 
+#include "save_results.h"
 #include <time.h>
-
 #define RUNS 10
-#define TICKS_PER_RUN 10000000
+#define TICKS_PER_RUN 10000
+#define RUN_REFERENCE "mono_px_and_py_and_pz_and_pr_and_px2"
 
 void print_data(uint32_t count, inputs_px_and_py_and_pz_and_pr_and_px2_t inputs, outputs_px_and_py_and_pz_and_pr_and_px2_t outputs) {
     printf("Tick %7d: x:%d, x_accel:%d, x_hold:%d, y:%d, y_accel:%d, y_hold:%d, z:%d, z_accel:%d, z_hold:%d, rpm:%d, rpm_up:%d, rpm_hold:%d, x2:%d, x2_accel:%d, x2_hold:%d\r\n", count, inputs.x, outputs.x_accel, outputs.x_hold, inputs.y, outputs.y_accel, outputs.y_hold, inputs.z, outputs.z_accel, outputs.z_hold, inputs.rpm, outputs.rpm_up, outputs.rpm_hold, inputs.x2, outputs.x2_accel, outputs.x2_hold);
 }
 
 int main() {
+    char run_reference[] = RUN_REFERENCE;
+    save_setup(run_reference);
+
     double cpu_time_used[RUNS] = {0};
     for (uint16_t run = 0; run < RUNS; run++) {
         clock_t start, end;
@@ -70,6 +74,8 @@ int main() {
         
         end = clock();
         cpu_time_used[run] = ((double) (end - start)) / CLOCKS_PER_SEC;
+
+        save_time(run+1, cpu_time_used[run]);
 
         printf("%f\n", cpu_time_used[run]);
     }   
