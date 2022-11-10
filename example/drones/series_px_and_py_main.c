@@ -1,4 +1,4 @@
-#include "series_F_px_and_py.h"
+#include "manual_series_F_px_and_py.h"
 #include <stdio.h>
 
 #include <time.h>
