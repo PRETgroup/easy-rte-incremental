@@ -1,8 +1,7 @@
 function px_and_py_and_pz;
 interface of px_and_py_and_pz {
-	in uint8_t x, y, z, x2;
-	in uint16_t rpm;
-	out bool x_accel, x_hold, y_accel, y_hold, z_accel, z_hold, rpm_up, rpm_hold, x2_accel, x2_hold; //out here means that they're going from CONTROLLER to PLANT
+	in uint8_t x, y, z;
+	out bool x_accel, x_hold, y_accel, y_hold, z_accel, z_hold;
 }
 
 policy px of px_and_py_and_pz {

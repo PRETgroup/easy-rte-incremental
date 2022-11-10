@@ -16,6 +16,8 @@ int main() {
     save_setup(run_reference);
 
     double cpu_time_used[RUNS] = {0};
+    double cpu_time_ms_per_tick[RUNS] = {0};
+
     for (uint16_t run = 0; run < RUNS; run++) {
         clock_t start, end;
 
@@ -74,10 +76,11 @@ int main() {
         
         end = clock();
         cpu_time_used[run] = ((double) (end - start)) / CLOCKS_PER_SEC;
+        cpu_time_ms_per_tick[run] = (cpu_time_used[run] * 1000.0) / ((double) TICKS_PER_RUN);
 
-        save_time(run+1, cpu_time_used[run]);
+        save_time(run+1, cpu_time_used[run], cpu_time_ms_per_tick[run]);
 
-        printf("%f\n", cpu_time_used[run]);
+        printf("Run: %d, CPU: %f s, Per Tick: %f ms\n", run+1, cpu_time_used[run], cpu_time_ms_per_tick[run]);
     }   
 }
 
