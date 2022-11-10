@@ -13,15 +13,17 @@ policy px of px_and_py_and_pz {
 	states {
         
 		l0 {												
-			-> l0 on (x < max_x || (!x_accel && x >= max_x));
+			-> l0 on ((!x_accel && !x_hold) || (x_accel && !x_hold && x < max_x));
 			-> l1 on (!x_accel && x_hold && x <= max_x);
 			-> violation on (x_accel && x >= max_x) recover x_accel:= 0;
+			-> violation on (x_accel && x_hold) recover x_accel:= 0;
 		}
 
 		l1 {												
 			-> l1 on (x_hold && x <= 10);
 			//-> l0 on (x < max_x || (!x_accel && x >= max_x));
 			-> violation on (x_accel && x >= max_x) recover x_accel:= 0;
+			-> violation on (x_accel && x_hold) recover x_accel:= 0;
 		}
 
 	}
@@ -35,15 +37,17 @@ policy py of px_and_py_and_pz {
 	states {
         
 		l0 {												
-			-> l0 on (y < max_y || (!y_accel && y >= max_y));
-			-> l1 on (!y_accel && x_hold && y <= max_y);
+			-> l0 on ((!y_accel && !y_hold) || (y_accel && !y_hold && y < max_y));
+			-> l1 on (!y_accel && y_hold && y <= max_y);
 			-> violation on (y_accel && y >= max_y) recover y_accel:= 0;
+			-> violation on (y_accel && y_hold) recover y_accel:= 0;
 		}
 
 		l1 {												
 			-> l1 on (y_hold && y <= 10);
 			//-> l0 on (y < max_y || (!y_accel && y >= max_y));
 			-> violation on (y_accel && y >= max_y) recover y_accel:= 0;
+			-> violation on (y_accel && y_hold) recover y_accel:= 0;
 		}
 
 	}
@@ -57,15 +61,17 @@ policy pz of px_and_py_and_pz {
 	states {
         
 		l0 {												
-			-> l0 on (z < max_z || (!z_accel && z >= max_z));
+			-> l0 on ((!z_accel && !z_hold) || (z_accel && !z_hold && z < max_z));
 			-> l1 on (!z_accel && x_hold && z <= max_z);
 			-> violation on (z_accel && z >= max_z) recover z_accel:= 0;
+			-> violation on (z_accel && z_hold) recover z_accel:= 0;
 		}
 
 		l1 {												
 			-> l1 on (z_hold && z <= 10);
 			//-> l0 on (z < max_z || (!z_accel && z >= max_z));
 			-> violation on (z_accel && z >= max_z) recover z_accel:= 0;
+			-> violation on (z_accel && z_hold) recover z_accel:= 0;
 		}
 
 	}

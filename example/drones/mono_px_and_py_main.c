@@ -26,8 +26,9 @@ int main() {
         inputs.x = 0;
         inputs.y = 0;
         inputs.z = 0;
-        inputs.rpm = 1000;
+        inputs.rpm = 800;
         inputs.x2 = 0;
+
         while(count++ < TICKS_PER_RUN) {
             if(count < 10 == 1) {
                 inputs.x = inputs.x + 1;

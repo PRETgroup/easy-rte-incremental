@@ -2,7 +2,7 @@ function px_and_py;
 interface of px_and_py {
 	in uint8_t x, y, z, x2;
 	in uint16_t rpm;
-	out bool x_accel, x_hold, y_accel, y_hold, z_accel, z_hold, rpm_up, rpm_hold, x2_accel, x2_hold; //out here means that they're going from CONTROLLER to PLANT
+	out uint8_t x_accel, x_hold, y_accel, y_hold, z_accel, z_hold, rpm_up, rpm_hold, x2_accel, x2_hold; //out here means that they're going from CONTROLLER to PLANT
 }
 
 policy px of px_and_py {
@@ -13,15 +13,17 @@ policy px of px_and_py {
 	states {
         
 		l0 {												
-			-> l0 on (x < max_x || (!x_accel && x >= max_x));
+			-> l0 on ((!x_accel && !x_hold) || (x_accel && !x_hold && x < max_x));
 			-> l1 on (!x_accel && x_hold && x <= max_x);
 			-> violation on (x_accel && x >= max_x) recover x_accel:= 0;
+			-> violation on (x_accel && x_hold) recover x_accel:= 0;
 		}
 
 		l1 {												
 			-> l1 on (x_hold && x <= 10);
 			//-> l0 on (x < max_x || (!x_accel && x >= max_x));
 			-> violation on (x_accel && x >= max_x) recover x_accel:= 0;
+			-> violation on (x_accel && x_hold) recover x_accel:= 0;
 		}
 
 	}
@@ -35,15 +37,17 @@ policy py of px_and_py {
 	states {
         
 		l0 {												
-			-> l0 on (y < max_y || (!y_accel && y >= max_y));
+			-> l0 on ((!y_accel && !y_hold) || (y_accel && !y_hold && y < max_y));
 			-> l1 on (!y_accel && y_hold && y <= max_y);
 			-> violation on (y_accel && y >= max_y) recover y_accel:= 0;
+			-> violation on (y_accel && y_hold) recover y_accel:= 0;
 		}
 
 		l1 {												
 			-> l1 on (y_hold && y <= 10);
 			//-> l0 on (y < max_y || (!y_accel && y >= max_y));
 			-> violation on (y_accel && y >= max_y) recover y_accel:= 0;
+			-> violation on (y_accel && y_hold) recover y_accel:= 0;
 		}
 
 	}
