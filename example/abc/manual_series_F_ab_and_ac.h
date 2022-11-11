@@ -82,11 +82,11 @@ extern void ab_and_ac_run(inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outpu
 
 //This function is provided in "series_F_ab_and_ac.c"
 //It will run the input enforcer for ab_and_ac's policy ab
-void ab_and_ac_run_input_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions);
+void ab_and_ac_run_input_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool);
 
 //This function is provided in "series_F_ab_and_ac.c"
 //It will run the input enforcer for ab_and_ac's policy ab
-void ab_and_ac_run_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions);
+void ab_and_ac_run_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool);
 
 void ab_and_ac_transition_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs);
 
@@ -103,11 +103,11 @@ int ab_and_ac_check_rv_status_ab(enforcervars_ab_and_ac_t* me);
 
 //This function is provided in "series_F_ab_and_ac.c"
 //It will run the input enforcer for ab_and_ac's policy ac
-void ab_and_ac_run_input_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions);
+void ab_and_ac_run_input_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool);
 
 //This function is provided in "series_F_ab_and_ac.c"
 //It will run the input enforcer for ab_and_ac's policy ac
-void ab_and_ac_run_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions);
+void ab_and_ac_run_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool);
 
 void ab_and_ac_transition_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs);
 
@@ -121,7 +121,8 @@ void ab_and_ac_transition_output_enforcer_ac(enforcervars_ab_and_ac_t* me, input
 //It will need to do some reachability analysis to achieve this
 int ab_and_ac_check_rv_status_ac(enforcervars_ab_and_ac_t* me);
 
-void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions);
-void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions);
+void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool);
+void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool);
 
-
+void select_output_new(outputs_ab_and_ac_t* uneditedOutputs, uint8_t* newAcceptableOutputsBool, outputs_ab_and_ac_t* possibleOutputs);
+void select_input_new(inputs_ab_and_ac_t* uneditedInputs, uint8_t* newAcceptableInputsBool, inputs_ab_and_ac_t* possibleInputs);
