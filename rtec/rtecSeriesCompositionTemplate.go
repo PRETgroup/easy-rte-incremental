@@ -12,7 +12,7 @@ const rtecSeriesCompositionTemplate = `{{define "_policyIn"}}{{$block := .}}
 {{if not $pfbEnf}}//{{$pol.Name}} is broken!
 {{else}}{{/* this is where the policy comes in */}}//INPUT POLICY {{$pol.Name}} BEGIN
 //This will run the input enforcer for {{$block.Name}}'s policy {{$pol.Name}}
-void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* inputOptions) {
+void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, uint8_t* newAcceptableInputsBool) {
 	switch(me->_policy_{{$pol.Name}}_state) {
 		{{range $sti, $st := $pol.States}}case POLICY_STATE_{{$block.Name}}_{{$pol.Name}}_{{$st.Name}}:
 			{{range $tri, $tr := $pfbEnf.InputPolicy.GetViolationTransitions}}{{if eq $tr.Source $st.Name}}{{/*
@@ -25,9 +25,11 @@ void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name
 				// {{range $soleI, $sole := $solution.Expressions}}{{$sol := getCECCTransitionCondition $block (compileExpression $sole)}}{{$sol.IfCond}};
 				
 				// Set of acceptable inputs
-				{{getAcceptableOptions (compileExpression $sole) $block.InputVars $block.Name "inputs"}}
-
-				input_option_intersection(acceptableOptions, numAccept, inputOptions);
+				// {{getAcceptableOptions (compileExpression $sole) $block.InputVars $block.Name "inputs"}}
+				// input_option_intersection(acceptableOptions, numAccept, inputOptions);
+				
+				{{getUnacceptableOptions (compileExpression $sole) $block.InputVars $block.Name "inputs"}}
+				unacceptable_input_option_intersection(newAcceptableInputsBool, numUnaccept, unacceptableOptions);
 				{{end}}
 			} {{end}}{{end}}
 			
@@ -46,7 +48,7 @@ void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name
 {{if not $pfbEnf}}//{{$pol.Name}} is broken!
 {{else}}{{/* this is where the policy comes in */}}//OUTPUT POLICY {{$pol.Name}} BEGIN
 //This will run the input enforcer for {{$block.Name}}'s policy {{$pol.Name}}
-void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t* outputOptions) {
+void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs, uint8_t* newAcceptableOutputsBool) {
 	//advance timers
 	{{range $varI, $var := $pfbEnf.OutputPolicy.GetDTimers}}
 	me->{{$var.Name}}++;{{end}}
@@ -61,14 +63,16 @@ void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Nam
 				//select a transition to solve the problem
 				{{$solution := $pfbEnf.SolveViolationTransition $tr false}}
 				{{if $solution.Comment}}//{{$solution.Comment}}{{end}}
-				//{{range $soleI, $sole := $solution.Expressions}}{{$sol := getCECCTransitionCondition $block (compileExpression $sole)}}{{$sol.IfCond}};
+				// {{range $soleI, $sole := $solution.Expressions}}{{$sol := getCECCTransitionCondition $block (compileExpression $sole)}}{{$sol.IfCond}};
 
-				// Set of acceptable outputs
-				{{getAcceptableOptions (compileExpression $sole) $block.OutputVars $block.Name "outputs"}}
+				// Previously
+				// {{getAcceptableOptions (compileExpression $sole) $block.OutputVars $block.Name "outputs"}}
+				// output_option_intersection(acceptableOptions, numAccept, outputOptions);
 
+				// Now provide a set of unacceptable outputs
+				{{getUnacceptableOptions (compileExpression $sole) $block.OutputVars $block.Name "outputs"}}
 				// Reduce the set of outputOptions 
-				output_option_intersection(acceptableOptions, numAccept, outputOptions);
-
+				unacceptable_output_option_intersection(newAcceptableOutputsBool, numUnaccept, unacceptableOptions);
 				{{end}}
 			} {{end}}{{end}}
 
@@ -185,20 +189,16 @@ extern void {{$block.Name}}_run(inputs_{{$block.Name}}_t* inputs, outputs_{{$blo
 {{range $polI, $pol := $block.Policies}}
 //This function is provided in "series_F_{{$block.Name}}.c"
 //It will run the input enforcer for {{$block.Name}}'s policy {{$pol.Name}}
-void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* inputOptions);
+void {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, uint8_t* newAcceptableInputsBool);
 
 //This function is provided in "series_F_{{$block.Name}}.c"
 //It will run the output enforcer for {{$block.Name}}'s policy {{$pol.Name}}
-void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t* outputOptions);
+void {{$block.Name}}_run_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs, uint8_t* newAcceptableOutputsBool);
 
-// Select function will select the FIRST acceptable input contained in inputOptions, while respecting transparency (will not edit if not required)
-void select_input(inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* inputOptions);
 
 //It will run update the location of output enforcer for {{$block.Name}}'s policy {{$pol.Name}}
 void {{$block.Name}}_transition_output_enforcer_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs);
 
-// Select function will select the FIRST acceptable output contained in outputOptions, while respecting transparency (will not edit if not required)
-void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t* outputOptions);
 
 //This function is provided in "series_F_{{$block.Name}}.c"
 //It will check the state of the enforcer monitor code
@@ -211,6 +211,13 @@ void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t
 int {{$block.Name}}_check_rv_status_{{$pol.Name}}(enforcervars_{{$block.Name}}_t* me);
 
 {{end}}
+// Select function will select the FIRST acceptable input contained in inputOptions, while respecting transparency (will not edit if not required)
+void select_input(inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* inputOptions);
+void select_input_new(inputs_{{$block.Name}}_t* uneditedInputs, uint8_t* newAcceptableInputsBool, inputs_{{$block.Name}}_t* possibleInputs);
+// Select function will select the FIRST acceptable output contained in outputOptions, while respecting transparency (will not edit if not required)
+void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t* outputOptions);
+void select_output_new(outputs_{{$block.Name}}_t* uneditedOutputs, uint8_t* newAcceptableOutputsBool, outputs_{{$block.Name}}_t* possibleOutputs);
+
 {{end}}
 
 {{define "functionC"}}{{$block := index .Functions .FunctionIndex}}{{$blocks := .Functions}}
@@ -220,7 +227,12 @@ int {{$block.Name}}_check_rv_status_{{$pol.Name}}(enforcervars_{{$block.Name}}_t
 
 inputs_{{$block.Name}}_t possibleInputs[INPUT_OPTIONS] = { {{getBinaryCombinations (len $block.InputVars)}}
 };
+uint8_t inputAcceptable[INPUT_OPTIONS] = { {{getTrueFor (len $block.InputVars)}}
+};
+
 outputs_{{$block.Name}}_t possibleOutputs[OUTPUT_OPTIONS] = { {{getBinaryCombinations (len $block.OutputVars)}}
+};
+uint8_t outputAcceptable[OUTPUT_OPTIONS] = { {{getTrueFor (len $block.OutputVars)}}
 };
 
 const inputs_{{$block.Name}}_t unacceptableInput = {{getBADString (len $block.InputVars) }}
@@ -254,20 +266,29 @@ void {{$block.Name}}_run_via_enforcer(enforcervars_{{$block.Name}}_t* me, inputs
 	outputs_{{$block.Name}}_t acceptableOutputs[OUTPUT_OPTIONS];
 	memcpy(acceptableOutputs, possibleOutputs, OUTPUT_OPTIONS*BYTES_PER_OUTPUT);
 
+	// New approach, 1xOPTIONS array holding boolean of if this i/o combo is acceptable or not.
+	uint8_t newAcceptableInputsBool[INPUT_OPTIONS];
+	memcpy(newAcceptableInputsBool, inputAcceptable, INPUT_OPTIONS*sizeof(uint8_t));
+
+	uint8_t newAcceptableOutputsBool[OUTPUT_OPTIONS];
+	memcpy(newAcceptableOutputsBool, outputAcceptable, OUTPUT_OPTIONS*sizeof(uint8_t));
+
 	// Run input enforcers
 	// 	acceptableInputs is the set that gets reduced by each enforcer	{{$lpol := len $block.Policies}}
-	{{range $polI, $pol_unused := $block.Policies}}{{$acti := sub (sub $lpol 1) $polI}}{{$pol := index $block.Policies $acti}} {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(me, inputs, acceptableInputs);
+	{{range $polI, $pol_unused := $block.Policies}}{{$acti := sub (sub $lpol 1) $polI}}{{$pol := index $block.Policies $acti}} {{$block.Name}}_run_input_enforcer_{{$pol.Name}}(me, inputs, newAcceptableInputsBool);
 	{{end}}
 	// Select input
-	select_input(inputs, acceptableInputs);
+	// select_input(inputs, acceptableInputs);
+	select_input_new(inputs, newAcceptableInputsBool, possibleInputs);
 	
 	{{$block.Name}}_run(inputs, outputs);
 	
 	// Run output enforcers
-	{{range $polI, $pol := $block.Policies}}{{$block.Name}}_run_output_enforcer_{{$pol.Name}}(me, inputs, outputs, acceptableOutputs);
+	{{range $polI, $pol := $block.Policies}}{{$block.Name}}_run_output_enforcer_{{$pol.Name}}(me, inputs, outputs, newAcceptableOutputsBool);
 	{{end}}
 	// Select output
-	select_output(outputs, acceptableOutputs);
+	// select_output(outputs, acceptableOutputs);
+	select_output_new(outputs, newAcceptableOutputsBool, possibleOutputs);
 
 	// Update output enforcer locations
 	{{range $polI, $pol := $block.Policies}}{{$block.Name}}_transition_output_enforcer_{{$pol.Name}}(me, inputs, outputs);
@@ -294,47 +315,20 @@ bool isBadOutput(const outputs_{{$block.Name}}_t* outputs) {
 }
 
 // Input Intersection
-void input_option_intersection(const inputs_{{$block.Name}}_t* acceptableInputs, const uint16_t numAccept, inputs_{{$block.Name}}_t* inputOptions) {
-	// for every option
-	for (uint16_t i = 0; i < INPUT_OPTIONS; i++) {
-		// check if it is in acceptable outputs
-		// printf("Option: %d\n", inputOptions[i].A);
-
-		bool accept = false;
-		for (uint16_t j = 0; j < numAccept; j++) {
-			if (compareInputs(&inputOptions[i], &acceptableInputs[j])) {
-				accept = true;
-			} 
-		}
-		if (!accept) {
-			// printf("Deny: %d\n", inputOptions[i].A);
-			memcpy(&inputOptions[i], &unacceptableInput, BYTES_PER_INPUT);
-		//} else {
-			// printf("Accept: %d\n", inputOptions[i].A);
-		}
+void unacceptable_input_option_intersection(uint8_t* newAcceptableInputsBool, const uint8_t numNewUncccept, const inputs_{{$block.Name}}_t* newUnacceptingInputOptions) {
+	// for every new unacceptable option
+	for (uint8_t j = 0; j < numNewUncccept; j++) {
+		uint16_t unAccptOptnValue = newUnacceptingInputOptions[j].A;
+		newAcceptableInputsBool[unAccptOptnValue] = false;
 	}
 }
 
 // Output Intersection
-void output_option_intersection(const outputs_{{$block.Name}}_t* acceptableOutputs, const uint16_t numAccept, outputs_{{$block.Name}}_t* outputOptions) {
-	// for every option
-	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
-		// check if it is in acceptable outputs
-		// printf("Option: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
-
-		bool accept = false;
-		for (uint16_t j = 0; j < numAccept; j++) {
-			// printf("Acceptable Input: %d, %d\n", acceptableOutputs[j].B, acceptableOutputs[j].C);
-			if (compareOutputs(&outputOptions[i], &acceptableOutputs[j])) {
-				accept = true;
-			} 
-		}
-		if (!accept) {
-			// printf("Deny: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
-			memcpy(&outputOptions[i], &unacceptableOutput, BYTES_PER_OUTPUT);
-		// } else {
-			// printf("Accept: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
-		}
+void unacceptable_output_option_intersection(uint8_t* newAcceptableOutputsBool, const uint8_t numNewUncccept, const outputs_{{$block.Name}}_t* newUnacceptingOutputOptions) {
+	// for every new unacceptable option
+	for (uint8_t j = 0; j < numNewUncccept; j++) {
+		uint16_t unAccptOptnValue = newUnacceptingOutputOptions[j].B *2 + newUnacceptingOutputOptions[j].C;
+		newAcceptableOutputsBool[unAccptOptnValue] = false;
 	}
 }
 
@@ -368,6 +362,33 @@ void select_input(inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* in
 	}
 }
 
+// Select Input
+void select_input_new(inputs_{{$block.Name}}_t* uneditedInputs, uint8_t* newAcceptableInputsBool, inputs_{{$block.Name}}_t* possibleInputs) {
+	// Check if current input is accepting
+	uint16_t uneditedInputsIndex ={{getInputIndex $block.InputVars}};
+	if (newAcceptableInputsBool[uneditedInputsIndex] == true) {
+		// If accepting return unchanged
+		// printf("NEW APPROACH - No input edit needed\n");
+		return;
+	}
+
+	// If we get here we know we need to edit
+	// for each in newAcceptableInputsBool
+	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
+		// if accepting
+		if (newAcceptableInputsBool[i] == true){
+			// look up what it should be in possibleInputs
+			// set inputs to possibleInputs
+			memcpy(uneditedInputs, &possibleInputs[i], BYTES_PER_INPUT);
+			return;
+		}
+	}
+
+	// assert that we dont get here 
+	// (as this would mean we didnt find accepting or edit to an accepting and something is wrong)
+	assert(false && "We must either perform no edit (transparency) or find a suitable edit."); 
+}
+
 // Select Output
 void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t* outputOptions) {
 	// TODO: replace with min-edit/min-select/rand-select
@@ -396,6 +417,33 @@ void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t
 	}
 }
 
+// Select Output
+void select_output_new(outputs_ab_and_ac_t* uneditedOutputs, uint8_t* newAcceptableOutputsBool, outputs_ab_and_ac_t* possibleOutputs) {
+	// Check if current output is accepting
+	uint16_t uneditedOutputsIndex ={{getOutputIndex $block.OutputVars}};
+	if (newAcceptableOutputsBool[uneditedOutputsIndex] == true) {
+		// If accepting return unchanged
+		// printf("NEW APPROACH - No output edit needed\n");
+		return;
+	}
+
+	// If we get here we know we need to edit
+	// for each in newAcceptableOutputsBool
+	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
+		// if accepting
+		if (newAcceptableOutputsBool[i] == true){
+			// look up what it should be in possibleOutputs
+			// set outputs to possibleOutputs
+			memcpy(uneditedOutputs, &possibleOutputs[i], BYTES_PER_OUTPUT);
+
+			return;
+		}
+	}
+
+	// assert that we dont get here 
+	// (as this would mean we didnt find accepting or edit to an accepting and something is wrong)
+	assert(false && "We must either perform no edit (transparency) or find a suitable edit."); 
+}
 {{if $block.Policies}}{{template "_policyIn" $block}}{{end}}
 
 {{if $block.Policies}}{{template "_policyOut" $block}}{{end}}
@@ -479,11 +527,15 @@ var cSeriesCompositionTemplateFuncMap = template.FuncMap{
 	"sub":   sub,
 	"times": times,
 
-	"twoToThePower":         twoToThePower,
-	"getBinaryCombinations": getBinaryCombinations,
-	"getBADString":          getBADString,
-	"getAcceptableOptions":  getAcceptableOptions,
-	"isNotLastElement":      isNotLastElement,
+	"twoToThePower":          twoToThePower,
+	"getBinaryCombinations":  getBinaryCombinations,
+	"getBADString":           getBADString,
+	"getTrueFor":             getTrueFor,
+	"getAcceptableOptions":   getAcceptableOptions,
+	"getUnacceptableOptions": getUnacceptableOptions,
+	"isNotLastElement":       isNotLastElement,
+	"getInputIndex":          getInputIndex,
+	"getOutputIndex":         getOutputIndex,
 }
 
 var cSeriesCompositionTemplates = template.Must(template.New("").Funcs(cSeriesCompositionTemplateFuncMap).Parse(rtecSeriesCompositionTemplate))

@@ -132,6 +132,15 @@ func twoToThePower(a int) int {
 	return int(math.Pow(2, float64(a)))
 }
 
+func getTrueFor(numberBits int) string {
+	var combinations string = ""
+	for i := 0; i < twoToThePower(numberBits); i++ {
+		thisLine := "\n\ttrue,"
+		combinations = combinations + thisLine
+	}
+	return combinations
+}
+
 func getBinaryCombinations(numberBits int) string {
 	var combinations string = ""
 	for i := 0; i < twoToThePower(numberBits); i++ {
@@ -199,5 +208,70 @@ func getAcceptableOptions(recoveryExpression string, outputInterface []rtedef.Va
 	// fmt.Print(acceptableOutputs)
 	// fmt.Print("\n")
 
-	return "const uint16_t numAccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t acceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
+	return "const uint16_t numAccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\t// const " + interfaceDirection + "_" + blockName + "_t acceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
+}
+
+func getUnacceptableOptions(recoveryExpression string, outputInterface []rtedef.Variable, blockName string, interfaceDirection string) string {
+	var splitString []string = strings.Split(recoveryExpression, "=")
+	var recoverOutput string = strings.Replace(splitString[0], " ", "", -1)
+	var recoverValue int = -3
+	var recoverBit int
+	recoverValue, _ = strconv.Atoi(strings.Replace(splitString[1], " ", "", -1))
+
+	for i, v := range outputInterface {
+		if v.Name == recoverOutput {
+			recoverBit = len(outputInterface) - 1 - i
+			// fmt.Println("Recover " + v.Name + " (bit " + strconv.Itoa(recoverBit) + ") by setting it to" + splitString[1])
+		}
+	}
+
+	var splitBinaryCombinations []string = strings.Split(strings.Replace(getBinaryCombinations(len(outputInterface)), "\t", "", -1), "\n")
+	// fmt.Print("\tAll options \t\t")
+	// fmt.Print(splitBinaryCombinations)
+	// fmt.Print("\n")
+	var acceptableOutputs []string
+	for i, possibleOutput := range splitBinaryCombinations {
+		if i > 0 { // Skip first
+			// fmt.Println(possibleOutput)
+			var possibleOutputTweak string = strings.Replace(possibleOutput, "{", "", -1)
+			possibleOutputTweak = strings.Replace(possibleOutputTweak, "},", "", -1)
+			var values []string = strings.Split(possibleOutputTweak, ",")
+			// fmt.Println(values)
+
+			var possibleOutputRecoveryValue int
+			possibleOutputRecoveryValue, _ = strconv.Atoi(values[len(values)-recoverBit-1])
+			// fmt.Println("I think " + recoverOutput + " is in bit " + strconv.Itoa(recoverBit) + " and has a value of " + strconv.Itoa(possibleOutputRecoveryValue))
+			if possibleOutputRecoveryValue != recoverValue {
+				// Keep
+				acceptableOutputs = append(acceptableOutputs, strings.Replace(possibleOutput, "},", "}", -1))
+			} // else discard
+		}
+	}
+	// fmt.Print("\tAcceptable options \t")
+	// fmt.Print(acceptableOutputs)
+	// fmt.Print("\n")
+
+	return "const uint16_t numUnaccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t unacceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
+}
+
+func getInputIndex(InputVars []rtedef.Variable) string {
+	var indexCalcStr string = ""
+	for i := 0; i < len(InputVars); i++ {
+		indexCalcStr = indexCalcStr + " uneditedInputs->" + InputVars[i].Name + "*" + strconv.Itoa(twoToThePower(len(InputVars)-1-i))
+		if i > 0 {
+			indexCalcStr = indexCalcStr + " + "
+		}
+	}
+	return indexCalcStr
+}
+
+func getOutputIndex(OutputVars []rtedef.Variable) string {
+	var indexCalcStr string = ""
+	for i := 0; i < len(OutputVars); i++ {
+		indexCalcStr = indexCalcStr + " uneditedOutputs->" + OutputVars[i].Name + "*" + strconv.Itoa(twoToThePower(len(OutputVars)-1-i))
+		if (len(OutputVars) > 1) && (i < len(OutputVars)-1) {
+			indexCalcStr = indexCalcStr + " +"
+		}
+	}
+	return indexCalcStr
 }

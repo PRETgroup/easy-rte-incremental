@@ -69,8 +69,8 @@ void ab_and_ac_run_via_enforcer(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t
 	// 	printf("\t%d", newAcceptableInputsBool[j]);
 	// }
 	// printf("\n");
-	ab_and_ac_run_input_enforcer_ac(me, inputs, acceptableInputs, newAcceptableInputsBool); 
-	ab_and_ac_run_input_enforcer_ab(me, inputs, acceptableInputs, newAcceptableInputsBool);
+	ab_and_ac_run_input_enforcer_ac(me, inputs, newAcceptableInputsBool); 
+	ab_and_ac_run_input_enforcer_ab(me, inputs, newAcceptableInputsBool);
 	// printf("After input enforcers select");
 	// for (uint8_t j = 0; j < INPUT_OPTIONS; j++) {
 	// 	printf("\t%d", newAcceptableInputsBool[j]);
@@ -78,7 +78,7 @@ void ab_and_ac_run_via_enforcer(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t
 	// printf("\n");
 	
 	// Select input
-	// select_input(inputs, acceptableInputs, newAcceptableInputsBool);
+	// select_input(inputs, acceptableInputs);
 	select_input_new(inputs, newAcceptableInputsBool, possibleInputs);
 
 	ab_and_ac_run(inputs, outputs);
@@ -88,8 +88,8 @@ void ab_and_ac_run_via_enforcer(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t
 	// 	printf("\t%d", newAcceptableOutputsBool[j]);
 	// }
 	// printf("\n");
-	ab_and_ac_run_output_enforcer_ab(me, inputs, outputs, acceptableOutputs, newAcceptableOutputsBool);
-	ab_and_ac_run_output_enforcer_ac(me, inputs, outputs, acceptableOutputs, newAcceptableOutputsBool);
+	ab_and_ac_run_output_enforcer_ab(me, inputs, outputs, newAcceptableOutputsBool);
+	ab_and_ac_run_output_enforcer_ac(me, inputs, outputs, newAcceptableOutputsBool);
 	// printf("After output enforcers select");
 	// for (uint8_t j = 0; j < OUTPUT_OPTIONS; j++) {
 	// 	printf("\t%d", newAcceptableOutputsBool[j]);
@@ -97,11 +97,7 @@ void ab_and_ac_run_via_enforcer(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t
 	// printf("\n");
 
 	// Select output
-	outputs_ab_and_ac_t cpy_outputs;
-	memcpy(&cpy_outputs, outputs, BYTES_PER_OUTPUT);
-
-	select_output(&cpy_outputs, acceptableOutputs, newAcceptableInputsBool);
-
+	// select_output(&cpy_outputs, acceptableOutputs);
 	select_output_new(outputs, newAcceptableOutputsBool, possibleOutputs);
 
 	// Update output enforcer locations
@@ -129,36 +125,6 @@ bool isBadOutput(const outputs_ab_and_ac_t* outputs) {
 	return compareOutputs(outputs, badOutput);
 }
 
-
-// Input Intersection
-void input_option_intersection(const inputs_ab_and_ac_t* acceptableInputs, const uint8_t numAccept, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool) {
-	// for every option
-	for (uint16_t i = 0; i < INPUT_OPTIONS; i++) {
-		// check if it is in acceptable outputs
-		// printf("Option: %d\n", inputOptions[i].A);
-
-		bool accept = false;
-		for (uint8_t j = 0; j < numAccept; j++) {
-			if (compareInputs(&inputOptions[i], &acceptableInputs[j])) {
-				accept = true;
-				break;
-			} 
-		}
-		if (!accept) {
-			// printf("\tDeny: %d\n", inputOptions[i].A);
-			memcpy(&inputOptions[i], &unacceptableInput, BYTES_PER_INPUT);
-		} else {
-			// printf("\tAccept: %d\n", inputOptions[i].A);
-		}
-	}
-
-	// for every acceptable option
-	for (uint8_t j = 0; j < numAccept; j++) {
-		printf("Acceptable Option Value: %d\n", acceptableInputs[j].A);
-	}
-
-}
-
 // Input Intersection
 void unacceptable_input_option_intersection(uint8_t* newAcceptableInputsBool, const uint8_t numNewUncccept, const inputs_ab_and_ac_t* newUnacceptingInputOptions) {
 	// for every new unacceptable option
@@ -166,32 +132,6 @@ void unacceptable_input_option_intersection(uint8_t* newAcceptableInputsBool, co
 		uint16_t unAccptOptnValue = newUnacceptingInputOptions[j].A;
 		printf("Unacceptable Input Option Value: %d, %d\n", unAccptOptnValue, newAcceptableInputsBool[unAccptOptnValue]);
 		newAcceptableInputsBool[unAccptOptnValue] = false;
-	}
-}
-
-// Output Intersection
-void output_option_intersection(const outputs_ab_and_ac_t* acceptableOutputs, const uint8_t numAccept, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool) {
-	// for every option
-	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
-		// check if it is in acceptable outputs
-		// printf("Option: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
-
-		bool accept = false;
-		for (uint8_t j = 0; j < numAccept; j++) {
-			// printf("\tAcceptable Input: %d, %d\n", acceptableOutputs[j].B, acceptableOutputs[j].C);
-			// printf("\tAcceptable Option Value: %d\n", acceptableOutputs[j].B *2 + acceptableOutputs[j].C);
-
-			if (compareOutputs(&outputOptions[i], &acceptableOutputs[j])) {
-				accept = true;
-				break;
-			} 
-		}
-		if (!accept) {
-			// printf("\tDeny: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
-			memcpy(&outputOptions[i], &unacceptableOutput, BYTES_PER_OUTPUT);
-		} else {
-			// printf("\tAccept: %d, %d\n", outputOptions[i].B, outputOptions[i].C);
-		}
 	}
 }
 
@@ -206,7 +146,7 @@ void unacceptable_output_option_intersection(uint8_t* newAcceptableOutputsBool, 
 }
 
 // Select Input
-void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool) {
+void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions) {
 	// TODO: replace with min-edit/min-select/rand-select
 	// printf("Current %d, %d\n", inputs->x_accel, inputs->x_hold);
 	for (uint16_t i = 0; i < INPUT_OPTIONS; i++) {
@@ -242,9 +182,9 @@ void select_input(inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, 
 // Select Input
 void select_input_new(inputs_ab_and_ac_t* uneditedInputs, uint8_t* newAcceptableInputsBool, inputs_ab_and_ac_t* possibleInputs) {
 	// Check if current input is accepting
-	uint16_t uneditedInputsValue = uneditedInputs->A;
+	uint16_t uneditedInputsIndex = uneditedInputs->A;
 	printf("Unedited - A:%d\n", uneditedInputs->A);
-	if (newAcceptableInputsBool[uneditedInputsValue] == true) {
+	if (newAcceptableInputsBool[uneditedInputsIndex] == true) {
 		// If accepting return unchanged
 		printf("NEW APPROACH - No input edit needed\n");
 		return;
@@ -271,10 +211,8 @@ void select_input_new(inputs_ab_and_ac_t* uneditedInputs, uint8_t* newAcceptable
 	assert(false && "We must either perform no edit (transparency) or find a suitable edit."); 
 }
 
-
-
 // Select Output
-void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool) {
+void select_output(outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions) {
 	// TODO: replace with min-edit/min-select/rand-select
 	// printf("Current %d, %d\n", outputs->x_accel, outputs->x_hold);
 	for (uint16_t i = 0; i < OUTPUT_OPTIONS; i++) {
@@ -344,11 +282,11 @@ void select_output_new(outputs_ab_and_ac_t* uneditedOutputs, uint8_t* newAccepta
 	assert(false && "We must either perform no edit (transparency) or find a suitable edit."); 
 }
 
-//Input policies
+// Input policies
 
 //INPUT POLICY ab BEGIN
 //This will run the input enforcer for ab_and_ac's policy ab
-void ab_and_ac_run_input_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool) {
+void ab_and_ac_run_input_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, uint8_t* newAcceptableInputsBool) {
 	switch(me->_policy_ab_state) {
 		case POLICY_STATE_ab_and_ac_ab_b0:
 			
@@ -368,9 +306,9 @@ void ab_and_ac_run_input_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and
 				// inputs->A = 0;
 
 				// Set of acceptable inputs
-				const uint8_t numAccept = 1;
-				const inputs_ab_and_ac_t acceptableInputs[1] = {{0}};
-				input_option_intersection(acceptableInputs, numAccept, inputOptions, newAcceptableInputsBool);
+				// const uint8_t numAccept = 1;
+				// const inputs_ab_and_ac_t acceptableInputs[1] = {{0}};
+				// input_option_intersection(acceptableInputs, numAccept, inputOptions, newAcceptableInputsBool);
 				
 				const uint8_t numNewUncccept = 1;
 				const inputs_ab_and_ac_t newUnacceptingInputOptions[1] = {
@@ -390,7 +328,7 @@ void ab_and_ac_run_input_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and
 
 //INPUT POLICY ac BEGIN
 //This will run the input enforcer for ab_and_ac's policy ac
-void ab_and_ac_run_input_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, inputs_ab_and_ac_t* inputOptions, uint8_t* newAcceptableInputsBool) {
+void ab_and_ac_run_input_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, uint8_t* newAcceptableInputsBool) {
 	switch(me->_policy_ac_state) {
 		case POLICY_STATE_ab_and_ac_ac_c0:
 			
@@ -410,20 +348,19 @@ void ab_and_ac_run_input_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and
 				//transition c1 -> violation on not (A) or A
 				//select a transition to solve the problem
 				
-				// Previously this was a defined recovery
+				//Recovery instructions manually provided.
 				// inputs->A = 0;
 
 				// Set of acceptable inputs
-				const uint8_t numAccept = 1;
-				const inputs_ab_and_ac_t acceptableInputs[1] = {{0}};
+				// const uint16_t numAccept = 1;
+				// const inputs_ab_and_ac_t acceptableOptions[1] = {{0}};
+				// input_option_intersection(acceptableOptions, numAccept, inputOptions);
 				
-				input_option_intersection(acceptableInputs, numAccept, inputOptions, newAcceptableInputsBool);
-				
-				const uint8_t numNewUncccept = 1;
-				const inputs_ab_and_ac_t newUnacceptingInputOptions[1] = {
+				const uint16_t numUnaccept = 1;
+				const inputs_ab_and_ac_t unacceptableOptions[1] = {
 					{1}
 				};
-				unacceptable_input_option_intersection(newAcceptableInputsBool, numNewUncccept, newUnacceptingInputOptions);
+				unacceptable_input_option_intersection(newAcceptableInputsBool, numUnaccept, unacceptableOptions);
 
 
 			} 
@@ -442,7 +379,7 @@ void ab_and_ac_run_input_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and
 
 //OUTPUT POLICY ab BEGIN
 //This will run the input enforcer for ab_and_ac's policy ab
-void ab_and_ac_run_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool) {
+void ab_and_ac_run_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, uint8_t* newAcceptableOutputsBool) {
 	//advance timers
 	// printf("AB Output Running - loc: A:%d, B:%d, C:%d, State:%d\r\n", inputs->A, outputs->B, outputs->C, me->_policy_ab_state);
 
@@ -453,24 +390,24 @@ void ab_and_ac_run_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_an
 			if(( !(inputs->A) && outputs->B) || (inputs->A && outputs->B)) {
 				//transition b0 -> violation on ( ( !A and B ) or ( A and B ) )
 				//select a transition to solve the problem
-				// Previously 
 				// outputs->B = 0;
 
-				// Now provide a set of acceptable outputs
-				const uint8_t numAccept = 2;
-				const outputs_ab_and_ac_t acceptableOutputs[2] = {
-					{0,0},
-					{0,1}
-				};
-				// Reduce the set of outputOptions 
-				output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
+				// Previously 
+				// const uint8_t numAccept = 2;
+				// const outputs_ab_and_ac_t acceptableOutputs[2] = {
+				// 	{0,0},
+				// 	{0,1}
+				// };
+				// output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
 				
-				const uint8_t numNewUncccept = 2;
-				const outputs_ab_and_ac_t newUnacceptingOutputOptions[2] = {
+				// Now provide a set of unacceptable outputs
+				const uint16_t numUnaccept = 2;
+				const outputs_ab_and_ac_t unacceptableOptions[2] = {
 					{1,0},
 					{1,1}
 				};
-				unacceptable_output_option_intersection(newAcceptableOutputsBool, numNewUncccept, newUnacceptingOutputOptions);
+				// Reduce the set of outputOptions 
+				unacceptable_output_option_intersection(newAcceptableOutputsBool, numUnaccept, unacceptableOptions);
 
 			} 
 
@@ -490,28 +427,27 @@ void ab_and_ac_run_output_enforcer_ab(enforcervars_ab_and_ac_t* me, inputs_ab_an
 				//select a transition to solve the problem
 				
 				// Previously 
-					//Recovery instructions manually provided.
-				// outputs->B = 1;
+				// const uint8_t numAccept = 2;
+				// const outputs_ab_and_ac_t acceptableOutputs[2] = {
+				// 	{1,0},
+				// 	{1,1}
+				// };
+				// output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
 
-				// Now provide a set of acceptable outputs
-				const uint8_t numAccept = 2;
-				const outputs_ab_and_ac_t acceptableOutputs[2] = {
-					{1,0},
-					{1,1}
-				};
-				// Reduce the set of outputOptions 
-				output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
-
-				const uint8_t numNewUncccept = 2;
-				const outputs_ab_and_ac_t newUnacceptingOutputOptions[2] = {
+				// Now provide a set of unacceptable outputs
+				const uint16_t numUnaccept = 2;
+				const outputs_ab_and_ac_t unacceptableOptions[2] = {
 					{0,0},
 					{0,1}
 				};
-				unacceptable_output_option_intersection(newAcceptableOutputsBool, numNewUncccept, newUnacceptingOutputOptions);
+				// Reduce the set of outputOptions 
+				unacceptable_output_option_intersection(newAcceptableOutputsBool, numUnaccept, unacceptableOptions);
 
 			} 
 
 			break;
+
+
 	}
 }
 
@@ -590,7 +526,7 @@ void ab_and_ac_transition_output_enforcer_ab(enforcervars_ab_and_ac_t* me, input
 
 //OUTPUT POLICY ac BEGIN
 //This will run the input enforcer for ab_and_ac's policy ac
-void ab_and_ac_run_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, outputs_ab_and_ac_t* outputOptions, uint8_t* newAcceptableOutputsBool) {
+void ab_and_ac_run_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_and_ac_t* inputs, outputs_ab_and_ac_t* outputs, uint8_t* newAcceptableOutputsBool) {
 	//advance timers
 	
 	
@@ -602,24 +538,24 @@ void ab_and_ac_run_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_an
 				//transition c0 -> violation on ( ( !A and C ) or ( A and C ) )
 				//select a transition to solve the problem
 				
-				// Previously
 				// outputs->C = 0;
 				
-				// Now provide a set of acceptable outputs
-				const uint8_t numAccept = 2;
-				const outputs_ab_and_ac_t acceptableOutputs[2] = {
-					{0,0},
-					{1,0}
-				};
-				// Reduce the set of outputOptions 
-				output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
+				// Previously
+				// const uint8_t numAccept = 2;
+				// const outputs_ab_and_ac_t acceptableOutputs[2] = {
+				// 	{0,0},
+				// 	{1,0}
+				// };
+				// output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
 
-				const uint8_t numNewUncccept = 2;
-				const outputs_ab_and_ac_t newUnacceptingOutputOptions[2] = {
+				// Now provide a set of unacceptable outputs
+				const uint16_t numUnaccept = 2;
+				const outputs_ab_and_ac_t unacceptableOptions[2] = {
 					{0,1},
 					{1,1}
 				};
-				unacceptable_output_option_intersection(newAcceptableOutputsBool, numNewUncccept, newUnacceptingOutputOptions);
+				// Reduce the set of outputOptions 
+				unacceptable_output_option_intersection(newAcceptableOutputsBool, numUnaccept, unacceptableOptions);
 
 			} 
 
@@ -632,30 +568,29 @@ void ab_and_ac_run_output_enforcer_ac(enforcervars_ab_and_ac_t* me, inputs_ab_an
 				//select a transition to solve the problem
 				
 				//Recovery instructions manually provided.
-				
+				//
 			} 
 			if( !(outputs->C)) {
 				//transition c1 -> violation on ( !C )
 				//select a transition to solve the problem
 				
 				// Previously
-				// outputs->C = 1;
-								
-				// Now provide a set of acceptable outputs
-				const uint8_t numAccept = 2;
-				const outputs_ab_and_ac_t acceptableOutputs[2] = {
-					{0,1},
-					{1,1}
-				};
-				// Reduce the set of outputOptions 
-				output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
+				// const uint8_t numAccept = 2;
+				// const outputs_ab_and_ac_t acceptableOutputs[2] = {
+				// 	{0,1},
+				// 	{1,1}
+				// };
+				// output_option_intersection(acceptableOutputs, numAccept, outputOptions, newAcceptableOutputsBool);
 				
-				const uint8_t numNewUncccept = 2;
-				const outputs_ab_and_ac_t newUnacceptingOutputOptions[2] = {
+				// Now provide a set of unacceptable outputs
+				const uint16_t numUnaccept = 2;
+				const outputs_ab_and_ac_t unacceptableOptions[2] = {
 					{0,0},
 					{1,0}
 				};
-				unacceptable_output_option_intersection(newAcceptableOutputsBool, numNewUncccept, newUnacceptingOutputOptions);
+				// Reduce the set of outputOptions 
+				unacceptable_output_option_intersection(newAcceptableOutputsBool, numUnaccept, unacceptableOptions);
+
 			} 
 
 			break;
