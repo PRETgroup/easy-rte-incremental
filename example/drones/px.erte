@@ -2,7 +2,7 @@ function px;
 interface of px {
 	in uint8_t x, y, z, x2;
 	in uint16_t rpm;
-	out bool x_accel, x_hold, y_accel, y_hold, z_accel, z_hold, rpm_up, rpm_hold, x2_accel, x2_hold; //out here means that they're going from CONTROLLER to PLANT
+	out uint8_t x_accel, x_hold, y_accel, y_hold, z_accel, z_hold, rpm_up, rpm_hold, x2_accel, x2_hold; //out here means that they're going from CONTROLLER to PLANT
 }
 
 policy px of px {
