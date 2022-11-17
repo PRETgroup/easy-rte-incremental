@@ -3,8 +3,6 @@
 
 #include "save_results.h"
 #include <time.h>
-#define RUNS 10
-#define TICKS_PER_RUN 10000
 #define RUN_REFERENCE "series_px_and_py_and_pz"
 
 void print_data(uint32_t count, inputs_px_and_py_and_pz_t inputs, outputs_px_and_py_and_pz_t outputs) {
