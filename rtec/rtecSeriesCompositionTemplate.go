@@ -260,11 +260,11 @@ void {{$block.Name}}_init_all_vars(enforcervars_{{$block.Name}}_t* me, inputs_{{
 
 void {{$block.Name}}_run_via_enforcer(enforcervars_{{$block.Name}}_t* me, inputs_{{$block.Name}}_t* inputs, outputs_{{$block.Name}}_t* outputs) {
 	// Prepare set of all possible inputs (as all inputs are acceptable until enforcers reduce this set)
-	inputs_{{$block.Name}}_t acceptableInputs[INPUT_OPTIONS];
-	memcpy(acceptableInputs, possibleInputs, INPUT_OPTIONS*BYTES_PER_INPUT);
+	// inputs_{{$block.Name}}_t acceptableInputs[INPUT_OPTIONS];
+	// memcpy(acceptableInputs, possibleInputs, INPUT_OPTIONS*BYTES_PER_INPUT);
 	// Same for all possible outputs..
-	outputs_{{$block.Name}}_t acceptableOutputs[OUTPUT_OPTIONS];
-	memcpy(acceptableOutputs, possibleOutputs, OUTPUT_OPTIONS*BYTES_PER_OUTPUT);
+	// outputs_{{$block.Name}}_t acceptableOutputs[OUTPUT_OPTIONS];
+	// memcpy(acceptableOutputs, possibleOutputs, OUTPUT_OPTIONS*BYTES_PER_OUTPUT);
 
 	// New approach, 1xOPTIONS array holding boolean of if this i/o combo is acceptable or not.
 	uint8_t newAcceptableInputsBool[INPUT_OPTIONS];
@@ -315,20 +315,20 @@ bool isBadOutput(const outputs_{{$block.Name}}_t* outputs) {
 }
 
 // Input Intersection
-void unacceptable_input_option_intersection(uint8_t* newAcceptableInputsBool, const uint8_t numNewUncccept, const inputs_{{$block.Name}}_t* newUnacceptingInputOptions) {
+void unacceptable_input_option_intersection(uint8_t* newAcceptableInputsBool, const uint16_t numNewUncccept, const inputs_{{$block.Name}}_t* uneditedInputs) {
 	// for every new unacceptable option
-	for (uint8_t j = 0; j < numNewUncccept; j++) {
-		uint16_t unAccptOptnValue = newUnacceptingInputOptions[j].A;
-		newAcceptableInputsBool[unAccptOptnValue] = false;
+	for (uint16_t j = 0; j < numNewUncccept; j++) {
+		uint16_t unAccptOptnIndex ={{getInputIndex $block.InputVars true}};
+		newAcceptableInputsBool[unAccptOptnIndex] = false;
 	}
 }
 
 // Output Intersection
-void unacceptable_output_option_intersection(uint8_t* newAcceptableOutputsBool, const uint8_t numNewUncccept, const outputs_{{$block.Name}}_t* newUnacceptingOutputOptions) {
+void unacceptable_output_option_intersection(uint8_t* newAcceptableOutputsBool, const uint16_t numNewUncccept, const outputs_{{$block.Name}}_t* uneditedOutputs) {
 	// for every new unacceptable option
-	for (uint8_t j = 0; j < numNewUncccept; j++) {
-		uint16_t unAccptOptnValue = newUnacceptingOutputOptions[j].B *2 + newUnacceptingOutputOptions[j].C;
-		newAcceptableOutputsBool[unAccptOptnValue] = false;
+	for (uint16_t j = 0; j < numNewUncccept; j++) {
+		uint16_t unAccptOptnIndex ={{getOutputIndex $block.OutputVars true}};
+		newAcceptableOutputsBool[unAccptOptnIndex] = false;
 	}
 }
 
@@ -365,7 +365,7 @@ void select_input(inputs_{{$block.Name}}_t* inputs, inputs_{{$block.Name}}_t* in
 // Select Input
 void select_input_new(inputs_{{$block.Name}}_t* uneditedInputs, uint8_t* newAcceptableInputsBool, inputs_{{$block.Name}}_t* possibleInputs) {
 	// Check if current input is accepting
-	uint16_t uneditedInputsIndex ={{getInputIndex $block.InputVars}};
+	uint16_t uneditedInputsIndex ={{getInputIndex $block.InputVars false}};
 	if (newAcceptableInputsBool[uneditedInputsIndex] == true) {
 		// If accepting return unchanged
 		// printf("NEW APPROACH - No input edit needed\n");
@@ -418,9 +418,9 @@ void select_output(outputs_{{$block.Name}}_t* outputs, outputs_{{$block.Name}}_t
 }
 
 // Select Output
-void select_output_new(outputs_ab_and_ac_t* uneditedOutputs, uint8_t* newAcceptableOutputsBool, outputs_ab_and_ac_t* possibleOutputs) {
+void select_output_new(outputs_{{$block.Name}}_t* uneditedOutputs, uint8_t* newAcceptableOutputsBool, outputs_{{$block.Name}}_t* possibleOutputs) {
 	// Check if current output is accepting
-	uint16_t uneditedOutputsIndex ={{getOutputIndex $block.OutputVars}};
+	uint16_t uneditedOutputsIndex ={{getOutputIndex $block.OutputVars false}};
 	if (newAcceptableOutputsBool[uneditedOutputsIndex] == true) {
 		// If accepting return unchanged
 		// printf("NEW APPROACH - No output edit needed\n");

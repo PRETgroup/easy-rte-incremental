@@ -254,24 +254,24 @@ func getUnacceptableOptions(recoveryExpression string, outputInterface []rtedef.
 	return "const uint16_t numUnaccept = " + strconv.Itoa(len(acceptableOutputs)) + ";\n\t\t\t\tconst " + interfaceDirection + "_" + blockName + "_t unacceptableOptions[" + strconv.Itoa(len(acceptableOutputs)) + "] = {" + strings.Join(acceptableOutputs, ", ") + "};"
 }
 
-func getInputIndex(InputVars []rtedef.Variable) string {
+func getIndex(Vars []rtedef.Variable, VariableName string, JIndexed bool) string {
 	var indexCalcStr string = ""
-	for i := 0; i < len(InputVars); i++ {
-		indexCalcStr = indexCalcStr + " uneditedInputs->" + InputVars[i].Name + "*" + strconv.Itoa(twoToThePower(len(InputVars)-1-i))
+	for i := 0; i < len(Vars); i++ {
 		if i > 0 {
 			indexCalcStr = indexCalcStr + " + "
+		}
+		if JIndexed {
+			indexCalcStr = indexCalcStr + " ((bool)" + VariableName + "[j]." + Vars[i].Name + ")*" + strconv.Itoa(twoToThePower(len(Vars)-1-i))
+		} else {
+			indexCalcStr = indexCalcStr + " ((bool)" + VariableName + "->" + Vars[i].Name + ")*" + strconv.Itoa(twoToThePower(len(Vars)-1-i))
 		}
 	}
 	return indexCalcStr
 }
 
-func getOutputIndex(OutputVars []rtedef.Variable) string {
-	var indexCalcStr string = ""
-	for i := 0; i < len(OutputVars); i++ {
-		indexCalcStr = indexCalcStr + " uneditedOutputs->" + OutputVars[i].Name + "*" + strconv.Itoa(twoToThePower(len(OutputVars)-1-i))
-		if (len(OutputVars) > 1) && (i < len(OutputVars)-1) {
-			indexCalcStr = indexCalcStr + " +"
-		}
-	}
-	return indexCalcStr
+func getInputIndex(InputVars []rtedef.Variable, JIndexed bool) string {
+	return getIndex(InputVars, "uneditedInputs", JIndexed)
+}
+func getOutputIndex(OutputVars []rtedef.Variable, JIndexed bool) string {
+	return getIndex(OutputVars, "uneditedOutputs", JIndexed)
 }
