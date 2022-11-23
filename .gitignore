@@ -27,3 +27,4 @@ example/*/*
 *.mti
 *.mpf
 easy-rte-comp
+~$*.xlsx

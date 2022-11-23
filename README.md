@@ -303,7 +303,7 @@ Running this example will show that the robot eventually drives its way to the d
 
 Known limitations: 
 * Verilog only
-* Internal varialbes (clocks and constants) need to have independent names (in monolithic composition template only)
+* Internal variables (clocks and constants) need to have independent names (in monolithic composition template only, segmentation fault will occur if this isn't satisfied)
 
 ### A Word of Caution
 Ensure your transitions are described completely in the erte file. 
