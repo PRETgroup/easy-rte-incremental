@@ -100,7 +100,7 @@ policy pr of pb_and_ps_and_pj_and_pr_and_pb2 {
 	}
 }
 
-policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
+policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2 {
 	internals {
 		constant uint8_t min_x2 := 0; 
 		constant uint8_t max2_x2 := 10; 

@@ -6,7 +6,7 @@ interface of pb {
 	out uint8_t x2_up, x2_down, y2_up, y2_down, rpm2_up, rpm2_down;
 }
 
-policy pb of pb_and_ps {
+policy pb of pb {
 	internals {
 		constant uint8_t min_x := 0; 
 		constant uint8_t max_x := 10; 

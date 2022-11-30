@@ -31,7 +31,7 @@ int main() {
         inputs.y = 0;
         inputs.rpm = 800;
         inputs.x2 = 0;
-        print_data(0, inputs, outputs);
+        // print_data(0, inputs, outputs);
         while(count++ < TICKS_PER_RUN) {
                 inputs.x = inputs.x + 1;
                 outputs.x_up = true;
@@ -45,7 +45,7 @@ int main() {
 
             pb_and_ps_run_via_enforcer(&enf, &inputs, &outputs);
 
-            print_data(count, inputs, outputs);
+            // print_data(count, inputs, outputs);
         }
         
         end = clock();

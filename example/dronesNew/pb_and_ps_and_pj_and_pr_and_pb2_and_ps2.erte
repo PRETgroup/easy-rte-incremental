@@ -127,3 +127,23 @@ policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 
 	}
 }
+
+policy ps2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
+	states {
+        
+		l0 {
+			-> l0 on ((!x2_down && x2_up)) && ((y2_down && !y2_up));
+			-> l0 on ((!x2_down && x2_up)) && ((!y2_down && y2_up));
+			-> l0 on ((!x2_down && x2_up)) && ((!y2_down && !y2_up));
+			-> l0 on ((x2_down && !x2_up)) && ((y2_down && !y2_up));
+			-> l0 on ((x2_down && !x2_up)) && ((!y2_down && y2_up));
+			-> l0 on ((x2_down && !x2_up)) && ((!y2_down && !y2_up));
+			-> l0 on ((!x2_down && !x2_up)) && ((y2_down && !y2_up));
+			-> l0 on ((!x2_down && !x2_up)) && ((!y2_down && y2_up));
+			-> l0 on ((!x2_down && !x2_up)) && ((!y2_down && !y2_up));
+			-> violation on (x2_down && x2_up) recover x2_up:= 0;
+			-> violation on (y2_down && y2_up) recover y2_up:= 0;
+		}
+
+	}
+}
