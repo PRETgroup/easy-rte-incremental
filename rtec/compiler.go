@@ -19,15 +19,25 @@ type Converter struct {
 }
 
 //New returns a new instance of a Converter based on the provided language
-func New(language string) (*Converter, error) {
+func New(language string, parallelComposition bool, synthesis bool, seriesComposition bool) (*Converter, error) {
 	switch strings.ToLower(language) {
 	case "c":
-		return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "c", templates: cTemplates}, nil
+		if seriesComposition {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "c", templates: cSeriesCompositionTemplates}, nil
+		} else {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "c", templates: cTemplates}, nil
+		}
 	case "vhdl":
 		fmt.Println("WARNING: VHDL compilation support is currently not working due to problems with the VHDL type system. Try Verilog instead.")
 		return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "vhdl", templates: vhdlTemplates}, nil
 	case "verilog":
-		return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogTemplates}, nil
+		if parallelComposition {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogParallelCompositionTemplates}, nil
+		} else if synthesis {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogSynthesisTemplates}, nil
+		} else {
+			return &Converter{Funcs: make([]rtedef.EnforcedFunction, 0), Language: "verilog", templates: verilogTemplates}, nil
+		}
 	default:
 		return nil, errors.New("Language " + language + " is not supported")
 	}
@@ -60,7 +70,7 @@ type TemplateData struct {
 
 //ConvertAll converts iec61499 xml (stored as []FB) into vhdl []byte for each block (becomes []VHDLOutput struct)
 //Returns nil error on success
-func (c *Converter) ConvertAll() ([]OutputFile, error) {
+func (c *Converter) ConvertAll(parallelComposition bool, synthesis bool, seriesComposition bool) ([]OutputFile, error) {
 	finishedConversions := make([]OutputFile, 0, len(c.Funcs))
 
 	type templateInfo struct {
@@ -73,10 +83,21 @@ func (c *Converter) ConvertAll() ([]OutputFile, error) {
 
 	//convert all functions
 	if c.Language == "c" {
-		templates = []templateInfo{
-			{"F_", "functionC", "c"},
-			{"F_", "functionH", "h"},
-			{"cbmc_main_", "mainCBMCC", "c"},
+		if seriesComposition {
+			fmt.Println("series template!")
+
+			templates = []templateInfo{
+				{"series_F_", "functionC", "c"},
+				{"series_F_", "functionH", "h"},
+				{"series_cbmc_main_", "mainCBMCC", "c"},
+			}
+
+		} else {
+			templates = []templateInfo{
+				{"F_", "functionC", "c"},
+				{"F_", "functionH", "h"},
+				{"cbmc_main_", "mainCBMCC", "c"},
+			}
 		}
 	}
 	if c.Language == "vhdl" {
@@ -85,8 +106,20 @@ func (c *Converter) ConvertAll() ([]OutputFile, error) {
 		}
 	}
 	if c.Language == "verilog" {
-		templates = []templateInfo{
-			{"test_F_", "functionVerilog", "sv"},
+		if parallelComposition {
+			fmt.Println("Note: Experimentally compiled as parallel composition for hardware synthesis")
+			templates = []templateInfo{
+				{"parallel_F_", "functionVerilog", "sv"},
+			}
+		} else if synthesis {
+			fmt.Println("Note: Experimentally compiled for hardware synthesis")
+			templates = []templateInfo{
+				{"synthesis_F_", "functionVerilog", "sv"},
+			}
+		} else {
+			templates = []templateInfo{
+				{"test_F_", "functionVerilog", "sv"},
+			}
 		}
 	}
 	for _, template := range templates {

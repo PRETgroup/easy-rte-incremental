@@ -1,6 +1,17 @@
-# easy-rte
+# easy-rte-incremental
 
-## About
+## About easy-rte-incremental
+Forked for the purpose of extending the compiler's ability for incremental enforcement.
+
+Incremental enforcement is the concept of starting with 1 or more policies that you wish to enforce, then gradually adding new policies. This requires composition of policies. Traditionally such composition is done by taking the product of the policies you wish to compose. This results in state space explosion. 
+
+This fork contains the incremental series enforcement framework we propose in "Incremental Security Enforcement for Cyber-Physical Systems." In this framework policies are synthesised into enforcers that can be placed in series. 
+
+In examples/incrementalDrones a Drones QR Code Swarm example is available. A dedicated README is available in examples/incrementalDrones directory.
+
+Please refer to the below README of easy-rte for the basics. Additional discussion of composition in more detail is at the bottom of this.
+
+## About easy-rte
 This project provides an easy-to-use implementation of _bi-directional Runtime Enforcement_. It is the toolchain used in the paper [Smart I/O Modules for Mitigating Cyber-Physical Attacks on Industrial Control Systems](https://ieeexplore.ieee.org/abstract/document/8859335) (IEEE Transactions on Industrial Informatics (TII) 2020). 
 
 We ensure we are correct via formal proof and via the use of the CBMC and EBMC model checkers.
@@ -296,6 +307,65 @@ We can see then that the autogeneration of solutions is correct here, as it has 
 
 Running this example will show that the robot eventually drives its way to the desired location eventually, despite the controller presenting unsafe outputs (drive values too large) and the desired location being set off the table.
 
-## Combining policies (Experimental)
+## Composing Policies
 
-`make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product`
+Known limitations: 
+* Verilog only
+* Internal variables (clocks and constants) need to have independent names (in monolithic composition template only, segmentation fault will occur if this isn't satisfied)
+
+### A Word of Caution
+Ensure your transitions are described completely in the erte file. 
+
+For example: these two snipets are not guaranteed to result in the same behaviour. The desired outcome is for violation if B is not present within <= 5 (as per clock v1).
+
+```
+Policy 1.0
+-> s1 on B;
+-> violation on (v1 >= 5);
+```
+
+```
+Policy 1.1
+-> s1 on B;
+-> violation on (v1 >= 5) and (!B);
+```
+
+_The reason for the lack of a guarantee: If there are other policies that are composed with the above examples, the order in which transition conditions are tested becomes important, and this order is not controllable._
+
+_For example, take the below example compositions, where the order of these transitions is reversed. Policy 1.0 is obviously no longer correct when v1 = 5 and B is present, the policy will violate._
+
+```
+Policy 1.0 Composed
+-> ..
+-> violation on (v1 >= 5);
+-> ..
+-> s1 on B;
+```
+```
+Policy 1.1 Composed
+-> ..
+-> violation on (v1 >= 5) and (!B);
+-> ..
+-> s1 on B;
+```
+
+_While it may be tempting to write conditions as if they are assessed sequentially (Policy 1.0) this will likely cause more heartbreak and headache than simply writing complete transitions._
+
+_Perhaps at some point we can alter the compiler to test all non-violating transitions before violation ones, as this may save time in the erte file creation, but note this isn't truly in the spirit of a TA/DTA._
+
+### Monolithic Composition
+* For Verilog hardware synthesis use
+`make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product COMPILEARGS=-synthesis`
+		
+	_Produces verilog which can be simulated (tested in ModelSim) and synthesised (tested in Quartus)._
+
+* For EBMC use `make verilog_enf run_ebmc PROJECT=pacemaker FILE=p1_and_p2 PARSEARGS=-product`
+
+* For C Software use
+	* `make c_enf PROJECT=abc FILE=ab_and_ac PARSEARGS=-product` 
+	* `gcc example/abc/ab_and_ac_main.c example/abc/F_ab_and_ac.c -o example_abc_monolithic`
+
+### Parallel Composition
+* For Verilog hardware synthesis use `make verilog_enf PROJECT=abc5 COMPILEARGS=-parallelComposition`
+
+	_Produces verilog which can be simulated (tested in ModelSim) and synthesised (tested in Quartus)._

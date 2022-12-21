@@ -1,0 +1,164 @@
+function waterTreatment4;
+interface of waterTreatment4 {
+    //PLANT to CONTROLLER
+	in bool ScreenFlow;
+	in bool ClarifierTankReady;
+	in bool HighFilterPressure;
+	in bool PostFilterFlow;
+	in bool ChlorineFlow;
+
+    // CONTROLLER to PLANT
+	out bool AddFloc; 
+	out bool EnFilterPump; 
+	out bool EnChemicalPump; 
+	out bool AddChlorine; 
+}
+
+policy s1 of waterTreatment4 {
+	internals {
+		dtimer_t t;
+        constant uint16_t maxTicks := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l1 on (ScreenFlow && !AddFloc): t := 0;
+			-> l2 on (ScreenFlow && AddFloc);
+			-> violation on (!ScreenFlow && AddFloc) recover AddFloc := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l1 on (ScreenFlow && !AddFloc && t <= maxTicks);
+			-> l2 on (ScreenFlow && AddFloc && t <= maxTicks);
+			-> l3 on (!ScreenFlow && AddFloc): t:=0;	
+			-> violation on (ScreenFlow && !AddFloc && t > maxTicks) recover AddFloc := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l2 on (ScreenFlow && AddFloc);
+			-> l3 on (!ScreenFlow && AddFloc): t:=0;
+			-> violation on (ScreenFlow && !AddFloc) recover AddFloc := 1;	
+		}
+
+		l3 {
+			-> l0 on (!ScreenFlow && !AddFloc && t <= maxTicks);
+			-> l1 on (ScreenFlow && !AddFloc): t:=0;
+			-> l2 on (ScreenFlow && AddFloc);
+			-> l3 on (!ScreenFlow && AddFloc && t <= maxTicks);
+			-> violation on (!ScreenFlow && AddFloc && t > maxTicks) recover AddFloc := 0;	
+		}
+	}
+}
+
+policy s2 of waterTreatment4 {
+	states {
+
+		l0 {
+			-> l0 on (!ClarifierTankReady and !EnFilterPump);
+			-> l1 on (ClarifierTankReady and !HighFilterPressure and EnFilterPump);
+
+			-> violation on (ClarifierTankReady and !HighFilterPressure and !EnFilterPump) recover EnFilterPump := 1;	
+			-> violation on (!ClarifierTankReady and !HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (!ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ClarifierTankReady and !EnFilterPump);
+			-> l1 on (ClarifierTankReady and !HighFilterPressure and EnFilterPump);
+			-> l1 on (ClarifierTankReady and HighFilterPressure and !EnFilterPump);
+
+			-> violation on (ClarifierTankReady and !HighFilterPressure and !EnFilterPump) recover EnFilterPump := 1;	
+			-> violation on (!ClarifierTankReady and !HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (!ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+		}
+	}
+}
+
+policy s3 of waterTreatment4 {
+	internals {
+		dtimer_t t3;
+        constant uint16_t maxTicks3 := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump);
+			-> l1 on (PostFilterFlow && !EnChemicalPump): t3 := 0;
+			-> l2 on (PostFilterFlow && EnChemicalPump);
+			-> violation on (!PostFilterFlow && EnChemicalPump) recover EnChemicalPump := 0;	
+		}
+
+		l1 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump);
+			-> l1 on (PostFilterFlow && !EnChemicalPump && t3 <= maxTicks3);
+			-> l2 on (PostFilterFlow && EnChemicalPump && t3 <= maxTicks3);
+			-> l3 on (!PostFilterFlow && EnChemicalPump): t3:=0;	
+			-> violation on (PostFilterFlow && !EnChemicalPump && t3 > maxTicks3) recover EnChemicalPump := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump);
+			-> l2 on (PostFilterFlow && EnChemicalPump);
+			-> l3 on (!PostFilterFlow && EnChemicalPump): t3:=0;
+			-> violation on (PostFilterFlow && !EnChemicalPump) recover EnChemicalPump := 1;	
+		}
+
+		l3 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump && t3 <= maxTicks3);
+			-> l1 on (PostFilterFlow && !EnChemicalPump): t3:=0;
+			-> l2 on (PostFilterFlow && EnChemicalPump);
+			-> l3 on (!PostFilterFlow && EnChemicalPump && t3 <= maxTicks3);
+			-> violation on (!PostFilterFlow && EnChemicalPump && t3 > maxTicks3) recover EnChemicalPump := 0;	
+		}
+	}
+}
+
+policy s4 of waterTreatment4 {
+	internals {
+		dtimer_t t4;
+        constant uint16_t maxTicks4 := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!ChlorineFlow && !AddChlorine);
+			-> l1 on (ChlorineFlow && !AddChlorine): t4 := 0;
+			-> l2 on (ChlorineFlow && AddChlorine);
+			-> violation on (!ChlorineFlow && AddChlorine) recover AddChlorine := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ChlorineFlow && !AddChlorine);
+			-> l1 on (ChlorineFlow && !AddChlorine && t4 <= maxTicks4);
+			-> l2 on (ChlorineFlow && AddChlorine && t4 <= maxTicks4);
+			-> l3 on (!ChlorineFlow && AddChlorine): t4:=0;	
+			-> violation on (ChlorineFlow && !AddChlorine && t4 > maxTicks4) recover AddChlorine := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!ChlorineFlow && !AddChlorine);
+			-> l2 on (ChlorineFlow && AddChlorine);
+			-> l3 on (!ChlorineFlow && AddChlorine): t4:=0;
+			-> violation on (ChlorineFlow && !AddChlorine) recover AddChlorine := 1;	
+		}
+
+		l3 {
+			-> l0 on (!ChlorineFlow && !AddChlorine && t4 <= maxTicks4);
+			-> l1 on (ChlorineFlow && !AddChlorine): t4:=0;
+			-> l2 on (ChlorineFlow && AddChlorine);
+			-> l3 on (!ChlorineFlow && AddChlorine && t4 <= maxTicks4);
+			-> violation on (!ChlorineFlow && AddChlorine && t4 > maxTicks4) recover AddChlorine := 0;	
+		}
+	}
+}

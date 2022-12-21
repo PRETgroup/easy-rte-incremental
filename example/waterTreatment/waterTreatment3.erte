@@ -1,0 +1,121 @@
+function waterTreatment3;
+interface of waterTreatment3 {
+    //PLANT to CONTROLLER
+	in bool ScreenFlow;
+	in bool ClarifierTankReady;
+	in bool HighFilterPressure;
+	in bool PostFilterFlow;
+
+    // CONTROLLER to PLANT
+	out bool AddFloc; 
+	out bool EnFilterPump; 
+	out bool EnChemicalPump; 
+}
+
+policy s1 of waterTreatment3 {
+	internals {
+		dtimer_t t;
+        constant uint16_t maxTicks := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l1 on (ScreenFlow && !AddFloc): t := 0;
+			-> l2 on (ScreenFlow && AddFloc);
+			-> violation on (!ScreenFlow && AddFloc) recover AddFloc := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l1 on (ScreenFlow && !AddFloc && t <= maxTicks);
+			-> l2 on (ScreenFlow && AddFloc && t <= maxTicks);
+			-> l3 on (!ScreenFlow && AddFloc): t:=0;	
+			-> violation on (ScreenFlow && !AddFloc && t > maxTicks) recover AddFloc := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l2 on (ScreenFlow && AddFloc);
+			-> l3 on (!ScreenFlow && AddFloc): t:=0;
+			-> violation on (ScreenFlow && !AddFloc) recover AddFloc := 1;	
+		}
+
+		l3 {
+			-> l0 on (!ScreenFlow && !AddFloc && t <= maxTicks);
+			-> l1 on (ScreenFlow && !AddFloc): t:=0;
+			-> l2 on (ScreenFlow && AddFloc);
+			-> l3 on (!ScreenFlow && AddFloc && t <= maxTicks);
+			-> violation on (!ScreenFlow && AddFloc && t > maxTicks) recover AddFloc := 0;	
+		}
+	}
+}
+
+policy s2 of waterTreatment3 {
+	states {
+
+		l0 {
+			-> l0 on (!ClarifierTankReady and !EnFilterPump);
+			-> l1 on (ClarifierTankReady and !HighFilterPressure and EnFilterPump);
+
+			-> violation on (ClarifierTankReady and !HighFilterPressure and !EnFilterPump) recover EnFilterPump := 1;	
+			-> violation on (!ClarifierTankReady and !HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (!ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ClarifierTankReady and !EnFilterPump);
+			-> l1 on (ClarifierTankReady and !HighFilterPressure and EnFilterPump);
+			-> l1 on (ClarifierTankReady and HighFilterPressure and !EnFilterPump);
+
+			-> violation on (ClarifierTankReady and !HighFilterPressure and !EnFilterPump) recover EnFilterPump := 1;	
+			-> violation on (!ClarifierTankReady and !HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (!ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+			-> violation on (ClarifierTankReady and HighFilterPressure and EnFilterPump) recover EnFilterPump := 0;	
+		}
+	}
+}
+
+policy s3 of waterTreatment3 {
+	internals {
+		dtimer_t t3;
+        constant uint16_t maxTicks3 := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump);
+			-> l1 on (PostFilterFlow && !EnChemicalPump): t3 := 0;
+			-> l2 on (PostFilterFlow && EnChemicalPump);
+			-> violation on (!PostFilterFlow && EnChemicalPump) recover EnChemicalPump := 0;	
+		}
+
+		l1 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump);
+			-> l1 on (PostFilterFlow && !EnChemicalPump && t3 <= maxTicks3);
+			-> l2 on (PostFilterFlow && EnChemicalPump && t3 <= maxTicks3);
+			-> l3 on (!PostFilterFlow && EnChemicalPump): t3:=0;	
+			-> violation on (PostFilterFlow && !EnChemicalPump && t3 > maxTicks3) recover EnChemicalPump := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump);
+			-> l2 on (PostFilterFlow && EnChemicalPump);
+			-> l3 on (!PostFilterFlow && EnChemicalPump): t3:=0;
+			-> violation on (PostFilterFlow && !EnChemicalPump) recover EnChemicalPump := 1;	
+		}
+
+		l3 {
+			-> l0 on (!PostFilterFlow && !EnChemicalPump && t3 <= maxTicks3);
+			-> l1 on (PostFilterFlow && !EnChemicalPump): t3:=0;
+			-> l2 on (PostFilterFlow && EnChemicalPump);
+			-> l3 on (!PostFilterFlow && EnChemicalPump && t3 <= maxTicks3);
+			-> violation on (!PostFilterFlow && EnChemicalPump && t3 > maxTicks3) recover EnChemicalPump := 0;	
+		}
+	}
+}

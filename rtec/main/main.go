@@ -11,9 +11,12 @@ import (
 )
 
 var (
-	inFileName  = flag.String("i", "", "Specifies the name of the source xml file to be compiled.")
-	outLocation = flag.String("o", "", "Specifies the name of the directory to put output files. If blank, uses current directory")
-	language    = flag.String("l", "c", "The output language")
+	inFileName          = flag.String("i", "", "Specifies the name of the source xml file to be compiled.")
+	outLocation         = flag.String("o", "", "Specifies the name of the directory to put output files. If blank, uses current directory")
+	language            = flag.String("l", "c", "The output language")
+	parallelComposition = flag.Bool("parallelComposition", false, "(Experimental, Verilog Only) Set this to true to produce a parallel composition of enforcers.")
+	synthesis           = flag.Bool("synthesis", false, "(Experimental, Verilog Only) Set this to true to produce Verilog which is compatible with ModelSim simulation and Quartus for hardware synthesis.")
+	seriesComposition   = flag.Bool("seriesComposition", false, "(Experimental, C Only) Set this to true to produce a series composition of enforcers.")
 )
 
 func main() {
@@ -34,7 +37,7 @@ func main() {
 	// 	return
 	// }
 
-	conv, err := rtec.New(*language)
+	conv, err := rtec.New(*language, *parallelComposition, *synthesis, *seriesComposition)
 	if err != nil {
 		fmt.Println("Error creating converter:", err.Error())
 		return
@@ -89,7 +92,7 @@ func main() {
 		return
 	}
 
-	outputs, err := conv.ConvertAll()
+	outputs, err := conv.ConvertAll(*parallelComposition, *synthesis, *seriesComposition)
 	if err != nil {
 		fmt.Println("Error during conversion:", err.Error())
 		return

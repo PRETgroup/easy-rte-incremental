@@ -1,0 +1,58 @@
+function ab_and_ac;
+interface of ab_and_ac {
+	in bool A;  //in here means that they're going from PLANT to CONTROLLER
+	in bool A2;  //in here means that they're going from PLANT to CONTROLLER
+	out bool B; //out here means that they're going from CONTROLLER to PLANT
+	out bool C; //out here means that they're going from CONTROLLER to PLANT
+}
+
+policy ab of ab_and_ac {
+	states {
+
+		b0 {
+			-> b0 on (!A and !B);
+
+			-> b1 on (A and !B);
+			
+			-> violation on ((!A and B) or (A and B)) recover B := 0;	
+		}
+
+		b1 {
+			//enforce B := 1;
+			//enforce A := 0 if A;
+			
+			-> violation on ((!A and !B) or (A)) recover A := 0;	
+			-> violation on (!B) recover B := 1;	
+
+			//if we receive a B only, head to state s0					
+			-> b0 on (!A and B);
+
+		}
+	}
+}
+
+policy ac of ab_and_ac {
+	states {
+
+		c0 {
+			-> c0 on (!A2 and !C);
+
+			-> c1 on (A2 and !C);
+			
+			-> violation on ((!A2 and C) or (A2 and C)) recover C := 0;	
+		}
+
+		c1 {
+			// dont use enforce signals when composing monolithically 
+			// (adds some form of priority which causes incorrect composition)
+			//enforce C := 1;
+			//enforce A2 := 0 if A2;
+			
+			-> violation on ((!A2 and !C) or (A2)) recover A2 := 0;	
+			-> violation on (!C) recover C := 1;	
+
+			-> c0 on (!A2 and C);
+
+		}
+	}
+}

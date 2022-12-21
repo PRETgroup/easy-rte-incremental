@@ -114,3 +114,21 @@ func ceilLog2(x uint64) int {
 func add(a, b int) int {
 	return a + b
 }
+
+func subtract(a, b int) int {
+	return a - b
+}
+
+func equal(a, b int) int {
+	if a == b {
+		return 1
+	}
+	return 0
+}
+
+func equal_str(a, b string) int {
+	if a == b {
+		return 1
+	}
+	return 0
+}

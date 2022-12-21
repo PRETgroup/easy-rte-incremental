@@ -1,0 +1,49 @@
+function waterTreatment1;
+interface of waterTreatment1 {
+    //PLANT to CONTROLLER
+	in bool ScreenFlow;
+
+    // CONTROLLER to PLANT
+	out bool AddFloc; 
+}
+
+policy s1 of waterTreatment1 {
+	internals {
+		dtimer_t t;
+        constant uint16_t maxTicks := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l1 on (ScreenFlow && !AddFloc): t := 0;
+			-> l2 on (ScreenFlow && AddFloc);
+			-> violation on (!ScreenFlow && AddFloc) recover AddFloc := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l1 on (ScreenFlow && !AddFloc && t <= maxTicks);
+			-> l2 on (ScreenFlow && AddFloc && t <= maxTicks);
+			-> l3 on (!ScreenFlow && AddFloc): t:=0;	
+			-> violation on (ScreenFlow && !AddFloc && t > maxTicks) recover AddFloc := 1;	
+
+		}
+
+		l2 {
+			-> l0 on (!ScreenFlow && !AddFloc);
+			-> l2 on (ScreenFlow && AddFloc);
+			-> l3 on (!ScreenFlow && AddFloc): t:=0;
+			-> violation on (ScreenFlow && !AddFloc) recover AddFloc := 1;	
+		}
+
+		l3 {
+			-> l0 on (!ScreenFlow && !AddFloc && t <= maxTicks);
+			-> l1 on (ScreenFlow && !AddFloc): t:=0;
+			-> l2 on (ScreenFlow && AddFloc);
+			-> l3 on (!ScreenFlow && AddFloc && t <= maxTicks);
+			-> violation on (!ScreenFlow && AddFloc && t > maxTicks) recover AddFloc := 0;	
+		}
+	}
+}

@@ -21,3 +21,10 @@ example/*/*
 !*.erte
 !*main.c
 !*.md
+
+*.sum
+*.mod
+*.mti
+*.mpf
+easy-rte-comp
+~$*.xlsx

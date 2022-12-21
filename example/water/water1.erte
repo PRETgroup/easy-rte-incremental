@@ -1,0 +1,36 @@
+function water1;
+interface of water1 {
+    //in here means that they're going from PLANT to CONTROLLER
+	in bool ID1;  // Sensor identification passed
+	in bool OK1;  // Sensor reporting okay status
+    //out here means that they're going from CONTROLLER to PLANT
+	out bool PUMP1; // Controller actuating pump
+}
+
+policy s1 of water1 {
+	states {
+
+		//first state is initial, and represents "We're waiting for an ID1 event from the sensor"
+		l0 {
+			enforce OK1 := 0, ID1 := 0 if (OK1 and ID1); // this needs to go first for priority
+			enforce OK1 := 0 if OK1;
+			enforce PUMP1 := 0 if PUMP1;
+
+			-> l0 on (!ID1 and !OK1 and !PUMP1);
+
+			-> l1 on (ID1 and !OK1 and !PUMP1);
+			
+			//-> violation on (PUMP1) recover PUMP1 := 0;	
+			//-> violation on (ID1 and OK1) recover ID1 := 0, OK1:= 0;	
+		}
+
+		//l1 is "we are waiting for a sensor update to determine if we could pump or not"
+		l1 {
+			enforce ID1 := 0, OK1 := 0 if ID1; // If the sensor IDs again it is considered malicious  
+            enforce PUMP1 := 0 if !OK1; // Don't pump if the sensor says dont!
+			//enforce PUMP1 := 1 if OK1; // Must pump if sensor says ok - REMOVED As controller using "sensor fusion" and redundancy in sensors
+
+			-> l0 on ((!ID1 and OK1 and PUMP1) or (!ID1 and !OK1 and !PUMP1) or (!ID1 and OK1 and !PUMP1)); // straight back to 10
+		}
+	}
+}

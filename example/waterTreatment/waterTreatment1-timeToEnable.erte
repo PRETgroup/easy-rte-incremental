@@ -1,0 +1,32 @@
+function waterTreatment1;
+interface of waterTreatment1 {
+    //PLANT to CONTROLLER
+	in bool ScreenFlow;
+
+    // CONTROLLER to PLANT
+	out bool AddFloc; 
+}
+
+policy s1 of waterTreatment1 {
+	internals {
+		dtimer_t t;
+        constant uint16_t maxTicks := 100;
+	}
+
+	states {
+
+		l0 {
+			-> l0 on (!ScreenFlow and !AddFloc);
+			-> l1 on (ScreenFlow and AddFloc) OR (ScreenFlow and !AddFloc): t := 0;
+			-> violation on (!ScreenFlow and AddFloc) recover AddFloc := 0;	
+		}
+
+		l1 {
+			-> l0 on (!ScreenFlow and !AddFloc);
+			-> l1 on (ScreenFlow and AddFloc and t <= maxTicks) OR (ScreenFlow and !AddFloc and t <= maxTicks);
+			-> violation on (ScreenFlow and !AddFloc and t > maxTicks) recover AddFloc := 1;	
+
+			-> violation on (!ScreenFlow and AddFloc) recover AddFloc := 0;	
+		}
+	}
+}
