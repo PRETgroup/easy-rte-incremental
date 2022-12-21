@@ -27,21 +27,39 @@ int main() {
         pb_and_ps_and_pj_init_all_vars(&enf, &inputs, &outputs);
 
         uint32_t count = 0;
+        // Drone 1 
+        //  min x = 0
+        //  max x = 2
+        //  min y = 200
+        //  max y = 202
+        //  rpm max = 7825
+
+        // Drone 2 
+        //  min x = 3
+        //  max x = 5
+        //  min y = 200
+        //  max y = 202
+        //  rpm max = 7825
+
+        // Initalise to maximums 
+        // controller will attempt to continue to increase beyond limits
+        // incremental enforcers will prevent limitation breaches
         inputs.x = 0;
-        inputs.y = 0;
-        inputs.rpm = 800;
-        inputs.x2 = 0;
+        inputs.y = 200;
+        inputs.rpm = 7825;
+        inputs.x2 = 3;
+
         // print_data(0, inputs, outputs);
         while(count++ < TICKS_PER_RUN) {
-                inputs.x = inputs.x + 1;
-                outputs.x_up = true;
-                outputs.x_down = true;
-                inputs.y = inputs.y + 1;
-                outputs.y_up = true;
-                outputs.y_down = true;
-            //     inputs.rpm = inputs.rpm + 50;
-                outputs.rpm_up = true;
-                outputs.rpm_down = true;
+            // inputs.x = inputs.x + 1;
+            outputs.x_up = true;
+            outputs.x_down = true;
+            // inputs.y = inputs.y + 1;
+            outputs.y_up = true;
+            outputs.y_down = true;
+            // inputs.rpm = inputs.rpm + 100;
+            outputs.rpm_up = true;
+            outputs.rpm_down = true;
 
             pb_and_ps_and_pj_run_via_enforcer(&enf, &inputs, &outputs);
 

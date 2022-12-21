@@ -1,12 +1,12 @@
-function pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2;
-interface of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
+function pb_and_ps_and_pj_and_pr_and_pb2_and_ps2;
+interface of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	in uint8_t x, y, x2, y2;
 	in uint16_t rpm, rpm2;
 	out uint8_t x_up, x_down, y_up, y_down, rpm_up, rpm_down; //out here means that they're going from CONTROLLER to PLANT
 	out uint8_t x2_up, x2_down, y2_up, y2_down, rpm2_up, rpm2_down;
 }
 
-policy ps of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
+policy ps of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	states {
         
 		l0 {
@@ -26,12 +26,12 @@ policy ps of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
 	}
 }
 
-policy pb of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
+policy pb of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	internals {
 		constant uint8_t min_x := 0; 
-		constant uint8_t max_x := 10; 
-		constant uint8_t min_y := 0; 
-		constant uint8_t max_y := 10; 
+		constant uint8_t max_x := 2; 
+		constant uint8_t min_y := 200; 
+		constant uint8_t max_y := 202; 
 	}
 	states {
         
@@ -54,10 +54,10 @@ policy pb of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
 	}
 }
 
-policy pj of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
+policy pj of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	internals {
 		constant uint8_t threshold := 5; 
-		constant uint8_t pj_min_y := 0; 
+		constant uint8_t pj_min_y := 200; 
 		dtimer_t v1;
 	}
 
@@ -84,7 +84,7 @@ policy pj of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
 	}
 }
 
-policy pr of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
+policy pr of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	internals {
 		constant uint16_t max_rpm := 7825; 
 	}
@@ -100,32 +100,12 @@ policy pr of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
 	}
 }
 
-policy ps2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
-	states {
-        
-		l0 {
-			-> l0 on ((!x2_down && x2_up)) && ((y2_down && !y2_up));
-			-> l0 on ((!x2_down && x2_up)) && ((!y2_down && y2_up));
-			-> l0 on ((!x2_down && x2_up)) && ((!y2_down && !y2_up));
-			-> l0 on ((x2_down && !x2_up)) && ((y2_down && !y2_up));
-			-> l0 on ((x2_down && !x2_up)) && ((!y2_down && y2_up));
-			-> l0 on ((x2_down && !x2_up)) && ((!y2_down && !y2_up));
-			-> l0 on ((!x2_down && !x2_up)) && ((y2_down && !y2_up));
-			-> l0 on ((!x2_down && !x2_up)) && ((!y2_down && y2_up));
-			-> l0 on ((!x2_down && !x2_up)) && ((!y2_down && !y2_up));
-			-> violation on (x2_down && x2_up) recover x2_up:= 0;
-			-> violation on (y2_down && y2_up) recover y2_up:= 0;
-		}
-
-	}
-}
-
-policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
+policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	internals {
-		constant uint8_t min_x2 := 0; 
-		constant uint8_t max2_x2 := 10; 
-		constant uint8_t min_y2 := 0; 
-		constant uint8_t max2_y2 := 10; 
+		constant uint8_t min_x2 := 3; 
+		constant uint8_t max2_x2 := 5; 
+		constant uint8_t min_y2 := 200; 
+		constant uint8_t max2_y2 := 202; 
 	}
 	states {
         
@@ -148,31 +128,21 @@ policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
 	}
 }
 
-policy pj2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2 {
-	internals {
-		constant uint8_t threshold2 := 5; 
-		constant uint8_t pj_min_y2 := 0; 
-		dtimer_t v2;
-	}
-
+policy ps2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2 {
 	states {
         
 		l0 {
-			-> l0 on (!x2_up && !y2_up && !rpm2_up);
-			-> l1 on (x2_up || y2_up || rpm2_up): v2 := 0;
-		}
-
-		l1 {
-			-> l1 on (x2_up || x2_down || y2_up || (y2_down && v2 <= threshold2) || rpm2_up || rpm2_down): v2 := 0;
-			-> l1 on (!x2_up && !x2_down && !y2_up && !y2_down && v2 <= threshold2 && !rpm2_up && !rpm2_down);
-			-> l2 on (y2_down && v2 > threshold2);
-			-> violation on (v2 > threshold2) recover y2_down := 1;
-		}
-
-		l2 {
-			-> l2 on (y2_down && y2 > pj_min_y2);
-			-> violation on (!y2_down && y2 > pj_min_y2) recover y2_down := 1;
-			-> l0 on (y2 <= pj_min_y2);
+			-> l0 on ((!x2_down && x2_up)) && ((y2_down && !y2_up));
+			-> l0 on ((!x2_down && x2_up)) && ((!y2_down && y2_up));
+			-> l0 on ((!x2_down && x2_up)) && ((!y2_down && !y2_up));
+			-> l0 on ((x2_down && !x2_up)) && ((y2_down && !y2_up));
+			-> l0 on ((x2_down && !x2_up)) && ((!y2_down && y2_up));
+			-> l0 on ((x2_down && !x2_up)) && ((!y2_down && !y2_up));
+			-> l0 on ((!x2_down && !x2_up)) && ((y2_down && !y2_up));
+			-> l0 on ((!x2_down && !x2_up)) && ((!y2_down && y2_up));
+			-> l0 on ((!x2_down && !x2_up)) && ((!y2_down && !y2_up));
+			-> violation on (x2_down && x2_up) recover x2_up:= 0;
+			-> violation on (y2_down && y2_up) recover y2_up:= 0;
 		}
 
 	}

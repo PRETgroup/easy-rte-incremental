@@ -1,37 +1,17 @@
-function pb_and_ps;
-interface of pb_and_ps {
+function pb;
+interface of pb {
 	in uint8_t x, y, x2, y2;
 	in uint16_t rpm, rpm2;
 	out uint8_t x_up, x_down, y_up, y_down, rpm_up, rpm_down; //out here means that they're going from CONTROLLER to PLANT
 	out uint8_t x2_up, x2_down, y2_up, y2_down, rpm2_up, rpm2_down;
 }
 
-policy ps of pb_and_ps {
-	states {
-        
-		l0 {
-			-> l0 on ((!x_down && x_up)) && ((y_down && !y_up));
-			-> l0 on ((!x_down && x_up)) && ((!y_down && y_up));
-			-> l0 on ((!x_down && x_up)) && ((!y_down && !y_up));
-			-> l0 on ((x_down && !x_up)) && ((y_down && !y_up));
-			-> l0 on ((x_down && !x_up)) && ((!y_down && y_up));
-			-> l0 on ((x_down && !x_up)) && ((!y_down && !y_up));
-			-> l0 on ((!x_down && !x_up)) && ((y_down && !y_up));
-			-> l0 on ((!x_down && !x_up)) && ((!y_down && y_up));
-			-> l0 on ((!x_down && !x_up)) && ((!y_down && !y_up));
-			-> violation on (x_down && x_up) recover x_up:= 0;
-			-> violation on (y_down && y_up) recover y_up:= 0;
-		}
-
-	}
-}
-
-policy pb of pb_and_ps {
+policy pb of pb {
 	internals {
 		constant uint8_t min_x := 0; 
-		constant uint8_t max_x := 10; 
-		constant uint8_t min_y := 0; 
-		constant uint8_t max_y := 10; 
+		constant uint8_t max_x := 2; 
+		constant uint8_t min_y := 200; 
+		constant uint8_t max_y := 202; 
 	}
 	states {
         

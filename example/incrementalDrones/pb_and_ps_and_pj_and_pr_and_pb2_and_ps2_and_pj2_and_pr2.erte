@@ -29,9 +29,9 @@ policy ps of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 policy pb of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 	internals {
 		constant uint8_t min_x := 0; 
-		constant uint8_t max_x := 10; 
-		constant uint8_t min_y := 0; 
-		constant uint8_t max_y := 10; 
+		constant uint8_t max_x := 2; 
+		constant uint8_t min_y := 200; 
+		constant uint8_t max_y := 202; 
 	}
 	states {
         
@@ -57,7 +57,7 @@ policy pb of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 policy pj of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 	internals {
 		constant uint8_t threshold := 5; 
-		constant uint8_t pj_min_y := 0; 
+		constant uint8_t pj_min_y := 200; 
 		dtimer_t v1;
 	}
 
@@ -122,10 +122,10 @@ policy ps2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 
 policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 	internals {
-		constant uint8_t min_x2 := 0; 
-		constant uint8_t max2_x2 := 10; 
-		constant uint8_t min_y2 := 0; 
-		constant uint8_t max2_y2 := 10; 
+		constant uint8_t min_x2 := 3; 
+		constant uint8_t max2_x2 := 5; 
+		constant uint8_t min_y2 := 200; 
+		constant uint8_t max2_y2 := 202; 
 	}
 	states {
         
@@ -151,7 +151,7 @@ policy pb2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 policy pj2 of pb_and_ps_and_pj_and_pr_and_pb2_and_ps2_and_pj2_and_pr2 {
 	internals {
 		constant uint8_t threshold2 := 5; 
-		constant uint8_t pj_min_y2 := 0; 
+		constant uint8_t pj_min_y2 := 200; 
 		dtimer_t v2;
 	}
 

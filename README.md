@@ -1,6 +1,17 @@
-# easy-rte
+# easy-rte-incremental
 
-## About
+## About easy-rte-incremental
+Forked for the purpose of extending the compiler's ability for incremental enforcement.
+
+Incremental enforcement is the concept of starting with 1 or more policies that you wish to enforce, then gradually adding new policies. This requires composition of policies. Traditionally such composition is done by taking the product of the policies you wish to compose. This results in state space explosion. 
+
+This fork contains the incremental series enforcement framework we propose in "Incremental Security Enforcement for Cyber-Physical Systems." In this framework policies are synthesised into enforcers that can be placed in series. 
+
+In examples/incrementalDrones a Drones QR Code Swarm example is available. A dedicated README is available in examples/incrementalDrones directory.
+
+Please refer to the below README of easy-rte for the basics. Additional discussion of composition in more detail is at the bottom of this.
+
+## About easy-rte
 This project provides an easy-to-use implementation of _bi-directional Runtime Enforcement_. It is the toolchain used in the paper [Smart I/O Modules for Mitigating Cyber-Physical Attacks on Industrial Control Systems](https://ieeexplore.ieee.org/abstract/document/8859335) (IEEE Transactions on Industrial Informatics (TII) 2020). 
 
 We ensure we are correct via formal proof and via the use of the CBMC and EBMC model checkers.
@@ -10,9 +21,6 @@ While the original implementation was restricted to simple _boolean_ arguments o
 with SCCharts, this project presents a more generalised any-type enforcement system, which can be used with any C project. 
 
 _easy-rte_ was ported from [goFB](https://github.com/PRETgroup/goFB).
-
-### About this Fork
-Forked in mid 2022 by Alex for the purpose of extending the compiler's ability for composition and hardware enforcement. This is discussed in more detail at the bottom of this read me. 
 
 ## What is Runtime Enforcement?
 
