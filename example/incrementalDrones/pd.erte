@@ -1,0 +1,25 @@
+function pd;
+interface of pd {
+	in uint8_t x, y, x2, y2;
+	in uint16_t rpm, rpm2;
+	out uint8_t x_up, x_down, y_up, y_down, rpm_up, rpm_down; //out here means that they're going from CONTROLLER to PLANT
+	out uint8_t x2_up, x2_down, y2_up, y2_down, rpm2_up, rpm2_down;
+}
+
+policy pd of pd {
+	internals {
+		constant uint8_t min_x_d2 := 3; 
+		constant uint8_t max_x_d1 := 2; 
+	}
+	states {
+        
+		b0 {
+			-> b0 on (!(x2 <= min_x_d2) || !(x >= max_x_d1));
+			-> b0 on (((x2 <= min_x_d2) && (x >= max_x_d1)) && (!x_down && x2_up));
+			-> b0 on (((x2 <= min_x_d2) && (x >= max_x_d1)) && (x_down && !x2_up));
+			-> b0 on (((x2 <= min_x_d2) && (x >= max_x_d1)) && (x_down && x2_up));
+			-> violation on (((x2 <= min_x_d2) && (x >= max_x_d1)) && (!x_down && !x2_up)) recover x_down:= 1;
+		}
+
+	}
+}
